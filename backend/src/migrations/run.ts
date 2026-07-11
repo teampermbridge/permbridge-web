@@ -1,5 +1,9 @@
+import dotenv from 'dotenv';
 import { readFileSync, readdirSync } from 'fs';
 import { join } from 'path';
+
+dotenv.config();
+
 import pool from '../db.js';
 
 const migrationsDir = join(process.cwd(), 'migrations');

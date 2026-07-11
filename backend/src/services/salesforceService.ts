@@ -1,4 +1,6 @@
-import { Connection } from 'jsforce';
+import * as jsforce from 'jsforce';
+
+type Connection = jsforce.Connection;
 
 interface SalesforceTokenResponse {
   access_token: string;
@@ -118,7 +120,7 @@ export async function refreshAccessToken(
 }
 
 export function createConnection(accessToken: string, instanceUrl: string): Connection {
-  const conn = new Connection({
+  const conn = new jsforce.Connection({
     instanceUrl,
     accessToken,
   });
