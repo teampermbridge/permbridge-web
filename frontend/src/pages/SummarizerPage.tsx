@@ -1,11 +1,40 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { useAuthStore } from '../store/authStore';
 import { BarChart3, Download, Shield } from 'lucide-react';
+import client from '../api/client';
 
 export function SummarizerPage() {
+  const organization = useAuthStore((state) => state.organization);
   const [type, setType] = useState<'profile' | 'permset' | 'group'>('profile');
   const [selectedTarget, setSelectedTarget] = useState<string | null>(null);
   const [compareMode, setCompareMode] = useState(false);
+  const [profiles, setProfiles] = useState<any[]>([]);
+  const [permsets, setPermsets] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (organization?.id) {
+      fetchData();
+    }
+  }, [organization?.id, type]);
+
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      if (type === 'profile') {
+        const res = await client.get(`/api/salesforce/org/${organization?.id}/profiles`);
+        setProfiles(res.data.profiles);
+      } else if (type === 'permset') {
+        const res = await client.get(`/api/salesforce/org/${organization?.id}/permsets`);
+        setPermsets(res.data.permissionSets);
+      }
+    } catch (error) {
+      console.error('Failed to fetch data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', width: '100%', minHeight: '100vh', background: '#020617' }}>
