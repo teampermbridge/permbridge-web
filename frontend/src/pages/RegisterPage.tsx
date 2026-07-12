@@ -25,7 +25,7 @@ export function RegisterPage() {
     setError(null);
 
     try {
-      const response = await client.post('/auth/register', {
+      const response = await client.post('/api/auth/register', {
         email,
         password,
         full_name: fullName,

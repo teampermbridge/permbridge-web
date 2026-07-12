@@ -23,7 +23,7 @@ export function LoginPage() {
     setError(null);
 
     try {
-      const response = await client.post('/auth/login', { email, password });
+      const response = await client.post('/api/auth/login', { email, password });
       const { token, user, organizations } = response.data;
 
       localStorage.setItem('auth_token', token);

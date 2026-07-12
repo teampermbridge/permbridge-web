@@ -9,7 +9,8 @@
     "build": "tsc",
     "start": "node dist/app.js",
     "test": "vitest",
-    "db:migrate": "tsx src/migrations/run.ts"
+    "migrate": "node scripts/migrate.js",
+    "migrate:reset": "node scripts/migrate.js --reset"
   },
   "keywords": ["salesforce", "permissions", "typescript", "express"],
   "author": "Reno Redaja",
