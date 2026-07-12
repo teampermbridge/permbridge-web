@@ -6,6 +6,7 @@ import organizationRoutes from './routes/organizations.js';
 import salesforceRoutes from './routes/salesforce.js';
 import profileRoutes from './routes/profiles.js';
 import permsetRoutes from './routes/permsets.js';
+import dashboardRoutes from './routes/dashboard.js';
 
 dotenv.config();
 
@@ -35,6 +36,7 @@ app.get('/health', (req, res) => {
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/organizations', organizationRoutes);
+app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/salesforce', salesforceRoutes);
 app.use('/api/profiles', profileRoutes);
 app.use('/api/permsets', permsetRoutes);

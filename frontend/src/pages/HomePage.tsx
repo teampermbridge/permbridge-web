@@ -1,14 +1,36 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { useAuthStore } from '../store/authStore';
 import { Link } from 'react-router-dom';
 import { LogOut, Bell, ChevronDown, Zap, BarChart3, Grid3x3, ArrowRight, TrendingUp } from 'lucide-react';
+import client from '../api/client';
 
 export function HomePage() {
   const { user, logout } = useAuth();
   const organization = useAuthStore((state) => state.organization);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [orgMenuOpen, setOrgMenuOpen] = useState(false);
+  const [stats, setStats] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (organization?.id) {
+      fetchStats();
+    }
+  }, [organization?.id]);
+
+  const fetchStats = async () => {
+    try {
+      setLoading(true);
+      const response = await client.get(`/api/dashboard/org/${organization?.id}`);
+      setStats(response.data);
+    } catch (error) {
+      console.error('Failed to fetch dashboard stats:', error);
+      setStats(null);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', width: '100%', minHeight: '100vh', background: '#020617' }}>
@@ -160,9 +182,9 @@ export function HomePage() {
           {/* Stats */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '18px', marginBottom: '40px' }}>
             {[
-              { label: 'Permission sets managed', value: '128', subtitle: '↑ 14 this month', color: '#5b9cf0' },
-              { label: 'Profiles analyzed', value: '42', subtitle: 'of 58 total profiles', color: '#a78bfa' },
-              { label: 'Avg. conversion time', value: '4m 12s', subtitle: 'well under the 5-min target', color: '#4ade80' },
+              { label: 'Permission sets managed', value: stats?.permissionSets || '0', subtitle: 'synced from Salesforce', color: '#5b9cf0' },
+              { label: 'Profiles analyzed', value: stats?.profiles || '0', subtitle: `of ${stats?.profiles || 0} total profiles`, color: '#a78bfa' },
+              { label: 'Users discovered', value: stats?.users || '0', subtitle: 'across all profiles', color: '#4ade80' },
             ].map((card, i) => (
               <div key={i} style={{
                 background: '#0e1426',
