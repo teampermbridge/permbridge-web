@@ -71,9 +71,9 @@ export function LoginPage() {
 
       <div className="relative z-10 min-h-screen flex flex-col lg:flex-row">
         {/* Left - Hero */}
-        <div className="lg:w-1/2 flex flex-col justify-center px-6 sm:px-12 py-12 lg:py-0">
-          <div className="max-w-md">
-            <div className="mb-12">
+        <div className="lg:w-2/5 flex flex-col justify-center px-6 sm:px-8 py-12 lg:py-0 lg:pr-8">
+          <div className="max-w-sm">
+            <div className="mb-8">
               <div className="flex items-center gap-3 mb-2">
                 <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-blue-600 rounded-lg flex items-center justify-center">
                   <Lock className="w-6 h-6 text-white" />
@@ -83,16 +83,16 @@ export function LoginPage() {
               <p className="text-slate-400 text-sm">Enterprise Permission Management</p>
             </div>
 
-            <div className="mb-12">
-              <h2 className="text-4xl lg:text-5xl font-bold text-white mb-4 leading-tight">
+            <div className="mb-8">
+              <h2 className="text-3xl lg:text-4xl font-bold text-white mb-3 leading-tight">
                 Master Your Permissions
               </h2>
-              <p className="text-slate-300 text-lg">
+              <p className="text-slate-300">
                 Convert, analyze, and visualize Salesforce permissions with AI-powered intelligence.
               </p>
             </div>
 
-            <div className="space-y-4 mb-12">
+            <div className="space-y-3 mb-8">
               {[
                 { icon: Zap, label: 'AI-Powered Conversion', desc: 'Intelligent permission grouping' },
                 { icon: Shield, label: 'Permission Analysis', desc: '360° permission insights' },
@@ -116,9 +116,9 @@ export function LoginPage() {
         </div>
 
         {/* Right - Login Form */}
-        <div className="lg:w-1/2 flex items-center justify-center px-6 sm:px-12 py-12 lg:py-0">
-          <div className="w-full max-w-md">
-            <div className="bg-slate-800/50 backdrop-blur-xl border border-slate-700 rounded-2xl p-8 shadow-2xl">
+        <div className="lg:w-3/5 flex items-center justify-center px-6 sm:px-12 py-12 lg:py-0">
+          <div className="w-full max-w-lg">
+            <div className="bg-slate-800/50 backdrop-blur-xl border border-slate-700 rounded-2xl p-10 shadow-2xl">
               <h3 className="text-2xl font-bold text-white mb-2">Welcome Back</h3>
               <p className="text-slate-400 mb-8">Sign in to your account</p>
 
