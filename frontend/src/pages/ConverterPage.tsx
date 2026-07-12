@@ -1,15 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuthStore } from '../store/authStore';
 import { Check } from 'lucide-react';
+import client from '../api/client';
 
-const PROFILES = [
-  { name: 'System Administrator', perms: 312 },
-  { name: 'Sales Rep — Enterprise', perms: 184 },
-  { name: 'Sales Rep — SMB', perms: 156 },
-  { name: 'Service Agent', perms: 142 },
-  { name: 'Marketing Manager', perms: 98 },
-  { name: 'Finance Analyst', perms: 121 },
-];
+const PROFILES: any[] = [];
 
 const GROUPS = [
   { name: 'Sales Core', items: ['Account — Edit', 'Contact — Edit', 'Opportunity — Edit', 'Lead — Edit', 'Task — Edit'] },
@@ -27,9 +22,31 @@ const ANALYSIS_LOG = [
 
 export function ConverterPage() {
   const navigate = useNavigate();
+  const organization = useAuthStore((state) => state.organization);
   const [step, setStep] = useState(1);
   const [selectedProfile, setSelectedProfile] = useState<string | null>(null);
   const [logLineCount, setLogLineCount] = useState(0);
+  const [profiles, setProfiles] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (organization?.id) {
+      fetchProfiles();
+    }
+  }, [organization?.id]);
+
+  const fetchProfiles = async () => {
+    try {
+      setLoading(true);
+      const response = await client.get(`/api/salesforce/org/${organization?.id}/profiles`);
+      setProfiles(response.data.profiles);
+    } catch (error) {
+      console.error('Failed to fetch profiles:', error);
+      setProfiles([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleAnalyze = async () => {
     if (!selectedProfile) return;
@@ -124,7 +141,12 @@ export function ConverterPage() {
               Claude will analyze every object and field permission and suggest logical groupings.
             </div>
             <div style={{ background: '#0e1426', border: '1px solid #1f2740', borderRadius: '14px', overflow: 'hidden' }}>
-              {PROFILES.map((p, i) => (
+              {loading ? (
+                <div style={{ padding: '32px', textAlign: 'center', color: '#8891a6' }}>Loading profiles...</div>
+              ) : profiles.length === 0 ? (
+                <div style={{ padding: '32px', textAlign: 'center', color: '#8891a6' }}>No profiles found. Sync your Salesforce org first.</div>
+              ) : (
+              profiles.map((p, i) => (
                 <div
                   key={i}
                   onClick={() => setSelectedProfile(p.name)}
@@ -133,7 +155,7 @@ export function ConverterPage() {
                     alignItems: 'center',
                     justifyContent: 'space-between',
                     padding: '16px 20px',
-                    borderBottom: i < PROFILES.length - 1 ? '1px solid #1a2138' : 'none',
+                    borderBottom: i < profiles.length - 1 ? '1px solid #1a2138' : 'none',
                     cursor: 'pointer',
                     background: selectedProfile === p.name ? 'rgba(27,115,232,0.08)' : 'transparent',
                     transition: 'background 0.12s',
@@ -141,7 +163,7 @@ export function ConverterPage() {
                 >
                   <div>
                     <div style={{ color: '#e2e8f0', fontSize: '14.5px', fontWeight: '600' }}>{p.name}</div>
-                    <div style={{ color: '#586178', fontSize: '12.5px', marginTop: '2px' }}>{p.perms} permissions</div>
+                    <div style={{ color: '#586178', fontSize: '12.5px', marginTop: '2px' }}>{p.object_permission_count || 0} object permissions</div>
                   </div>
                   <div style={{
                     width: '20px',
@@ -156,7 +178,7 @@ export function ConverterPage() {
                     {selectedProfile === p.name && <Check size={12} color="#fff" strokeWidth={3} />}
                   </div>
                 </div>
-              ))}
+              )))}
             </div>
             <button
               onClick={handleAnalyze}

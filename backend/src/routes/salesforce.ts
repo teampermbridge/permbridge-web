@@ -143,4 +143,50 @@ router.delete('/:orgId/connections/:connId', authenticate, async (req: AuthReque
   }
 });
 
+// GET /api/salesforce/org/:orgId/profiles - List all profiles
+router.get('/org/:orgId/profiles', authenticate, async (req: AuthRequest, res: Response) => {
+  const { orgId } = req.params;
+
+  try {
+    const result = await query(
+      `SELECT id, salesforce_profile_id, name, description, user_count, object_permission_count
+       FROM profiles
+       WHERE organization_id = $1
+       ORDER BY name ASC`,
+      [orgId]
+    );
+
+    res.json({
+      profiles: result.rows,
+      total: result.rows.length,
+    });
+  } catch (error) {
+    console.error('Profiles list error:', error);
+    res.status(500).json({ error: 'Failed to get profiles' });
+  }
+});
+
+// GET /api/salesforce/org/:orgId/permsets - List all permission sets
+router.get('/org/:orgId/permsets', authenticate, async (req: AuthRequest, res: Response) => {
+  const { orgId } = req.params;
+
+  try {
+    const result = await query(
+      `SELECT id, salesforce_permset_id, name, description, user_count, object_permission_count
+       FROM permission_sets
+       WHERE organization_id = $1
+       ORDER BY name ASC`,
+      [orgId]
+    );
+
+    res.json({
+      permissionSets: result.rows,
+      total: result.rows.length,
+    });
+  } catch (error) {
+    console.error('Permission sets list error:', error);
+    res.status(500).json({ error: 'Failed to get permission sets' });
+  }
+});
+
 export default router;
