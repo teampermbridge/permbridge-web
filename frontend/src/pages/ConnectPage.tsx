@@ -128,14 +128,27 @@ export function ConnectPage() {
       padding: '40px',
     }}>
       <div style={{ width: '100%', maxWidth: '560px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', justifyContent: 'center', marginBottom: '36px' }}>
+        <button
+          onClick={() => navigate('/user-dashboard')}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            justifyContent: 'center',
+            marginBottom: '36px',
+            background: 'transparent',
+            border: 'none',
+            cursor: 'pointer',
+            padding: 0,
+          }}
+        >
           <svg width="30" height="30" viewBox="0 0 96 96" fill="none">
             <rect width="96" height="96" rx="22" fill="#1B1F3B"></rect>
             <path d="M33 27 L33 69 M33 48 L58 27 M33 48 L60 69" stroke="#FFFFFF" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" fill="none"></path>
             <circle cx="67" cy="25" r="8" fill="#1B73E8"></circle>
           </svg>
-          <div style={{ color: '#f1f5f9', fontSize: '16px', fontWeight: '700' }}>Perm Bridge</div>
-        </div>
+          <div style={{ color: '#f1f5f9', fontSize: '16px', fontWeight: '700' }}>PermBridge</div>
+        </button>
 
         {isSyncing ? (
           <div style={{ background: '#0e1426', border: '1px solid #1f2740', borderRadius: '16px', padding: '36px', textAlign: 'center' }}>

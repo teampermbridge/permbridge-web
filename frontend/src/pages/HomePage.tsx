@@ -48,7 +48,7 @@ export function HomePage() {
         {/* Left */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '28px' }}>
           <button
-            onClick={() => navigate('/dashboard')}
+            onClick={() => navigate('/user-dashboard')}
             style={{
               display: 'flex',
               alignItems: 'center',
