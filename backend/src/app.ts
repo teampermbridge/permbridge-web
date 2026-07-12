@@ -2,6 +2,8 @@ import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import authRoutes from './routes/auth.js';
+import organizationRoutes from './routes/organizations.js';
+import salesforceRoutes from './routes/salesforce.js';
 import profileRoutes from './routes/profiles.js';
 import permsetRoutes from './routes/permsets.js';
 
@@ -32,6 +34,8 @@ app.get('/health', (req, res) => {
 
 // Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/organizations', organizationRoutes);
+app.use('/api/salesforce', salesforceRoutes);
 app.use('/api/profiles', profileRoutes);
 app.use('/api/permsets', permsetRoutes);
 
