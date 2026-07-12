@@ -9,6 +9,7 @@ import {
   getUserInfo,
   refreshAccessToken,
 } from '../services/salesforceService.js';
+import { syncSalesforceOrg, getSyncJobStatus } from '../services/syncService.js';
 import { AuthRequest, authenticate } from '../middleware/auth.js';
 
 const router = Router();
@@ -272,6 +273,99 @@ router.post('/logout', authenticate, async (req: AuthRequest, res: Response) => 
   } catch (error) {
     console.error('Logout error:', error);
     res.status(500).json({ error: 'Logout failed' });
+  }
+});
+
+// ============ Salesforce Sync ============
+
+router.post('/salesforce/sync', authenticate, async (req: AuthRequest, res: Response) => {
+  const { salesforceConnectionId, organizationId } = req.body;
+
+  if (!salesforceConnectionId || !organizationId) {
+    return res.status(400).json({ error: 'Missing required fields' });
+  }
+
+  try {
+    // Get the Salesforce connection details
+    const connResult = await query(
+      `SELECT access_token, refresh_token, salesforce_instance_url, token_expires_at
+       FROM salesforce_connections
+       WHERE id = $1 AND organization_id = $2`,
+      [salesforceConnectionId, organizationId]
+    );
+
+    if (connResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Salesforce connection not found' });
+    }
+
+    const conn = connResult.rows[0];
+    let accessToken = conn.access_token;
+
+    // Check if token needs refresh
+    if (new Date(conn.token_expires_at) < new Date()) {
+      console.log('Token expired, refreshing...');
+      if (!conn.refresh_token) {
+        return res.status(401).json({ error: 'Refresh token expired. Please reconnect.' });
+      }
+
+      try {
+        const refreshed = await refreshAccessToken(conn.refresh_token, conn.salesforce_instance_url);
+        accessToken = refreshed.access_token;
+
+        // Update token in database
+        await query(
+          `UPDATE salesforce_connections
+           SET access_token = $1, refresh_token = $2, token_expires_at = $3
+           WHERE id = $4`,
+          [
+            refreshed.access_token,
+            refreshed.refresh_token || conn.refresh_token,
+            new Date(parseInt(refreshed.issued_at) + 3600000),
+            salesforceConnectionId,
+          ]
+        );
+      } catch (err) {
+        return res.status(401).json({ error: 'Failed to refresh Salesforce token' });
+      }
+    }
+
+    // Start sync in background (don't wait for it)
+    console.log(`Starting sync for connection ${salesforceConnectionId}`);
+    syncSalesforceOrg(
+      salesforceConnectionId,
+      accessToken,
+      conn.salesforce_instance_url,
+      organizationId
+    ).catch((error) => {
+      console.error('Background sync error:', error);
+    });
+
+    // Return immediately with job info
+    res.json({
+      success: true,
+      message: 'Sync started in background',
+      syncConnectionId: salesforceConnectionId,
+    });
+  } catch (error) {
+    console.error('Sync error:', error);
+    res.status(500).json({ error: 'Failed to start sync' });
+  }
+});
+
+router.get('/salesforce/sync-status/:jobId', authenticate, async (req: AuthRequest, res: Response) => {
+  const { jobId } = req.params;
+
+  try {
+    const status = await getSyncJobStatus(jobId);
+
+    if (!status) {
+      return res.status(404).json({ error: 'Sync job not found' });
+    }
+
+    res.json(status);
+  } catch (error) {
+    console.error('Sync status error:', error);
+    res.status(500).json({ error: 'Failed to get sync status' });
   }
 });
 

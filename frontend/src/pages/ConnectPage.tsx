@@ -1,16 +1,19 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
-import { ArrowRight, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { AlertCircle, CheckCircle2 } from 'lucide-react';
 import client from '../api/client';
 
 export function ConnectPage() {
   const navigate = useNavigate();
   const setOrganization = useAuthStore((state) => state.setOrganization);
+  const organization = useAuthStore((state) => state.organization);
 
   const [domain, setDomain] = useState('');
   const [isConnecting, setIsConnecting] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
+  const [syncProgress, setSyncProgress] = useState(0);
   const [orgSummary, setOrgSummary] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -20,19 +23,9 @@ export function ConnectPage() {
     setError(null);
 
     try {
-      const response = await client.post('/auth/salesforce/connect', { domain });
-      await new Promise((r) => setTimeout(r, 1300));
-      setOrgSummary({
-        id: 'org-123',
-        name: 'Acme Robotics — Production',
-        type: 'Production',
-        edition: 'Enterprise Edition',
-        userCount: 1842,
-        profileCount: 58,
-        permsetCount: 46,
-      });
-      setIsConnected(true);
-      setIsConnecting(false);
+      // Get Salesforce OAuth URL and redirect
+      const response = await client.get('/api/auth/salesforce/login');
+      window.location.href = response.data.authUrl;
     } catch (err: any) {
       console.error('Connect error:', err);
       setError(err.response?.data?.error || 'Failed to connect org');
@@ -44,18 +37,83 @@ export function ConnectPage() {
     setIsConnected(false);
     setOrgSummary(null);
     setDomain('');
+    setError(null);
   };
 
   const handleContinue = () => {
     if (orgSummary) {
-      setOrganization({
-        id: orgSummary.id,
-        name: orgSummary.name,
-        type: orgSummary.type,
-        tier: 'pro',
-        role: 'owner',
-      });
       navigate('/dashboard');
+    }
+  };
+
+  // Check if we're returning from Salesforce OAuth
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('salesforce_connected') === 'true' && organization) {
+      // We're connected! Now sync
+      triggerSync();
+    }
+  }, [organization]);
+
+  const triggerSync = async () => {
+    setIsSyncing(true);
+    setSyncProgress(0);
+    setError(null);
+
+    try {
+      // Get the connection ID from somewhere (you'd need to pass this)
+      // For now, we'll assume the backend knows which connection to sync
+      const syncResponse = await client.post('/api/auth/salesforce/sync', {
+        organizationId: organization?.id,
+        salesforceConnectionId: organization?.salesforceConnectionId, // You'll need to store this
+      });
+
+      // Poll for sync status
+      const pollInterval = setInterval(async () => {
+        try {
+          const statusResponse = await client.get(
+            `/api/auth/salesforce/sync-status/${syncResponse.data.syncConnectionId}`
+          );
+
+          setSyncProgress(statusResponse.data.progress || 0);
+
+          if (statusResponse.data.status === 'completed') {
+            clearInterval(pollInterval);
+            setIsSyncing(false);
+
+            // Mock org summary for now
+            setOrgSummary({
+              id: organization?.id,
+              name: organization?.name || 'Salesforce Org',
+              type: 'Production',
+              edition: 'Enterprise Edition',
+              userCount: 1842,
+              profileCount: 58,
+              permsetCount: 46,
+            });
+            setIsConnected(true);
+          } else if (statusResponse.data.status === 'failed') {
+            clearInterval(pollInterval);
+            setIsSyncing(false);
+            setError(statusResponse.data.error_message || 'Sync failed');
+          }
+        } catch (err) {
+          console.error('Status check error:', err);
+        }
+      }, 1000); // Poll every second
+
+      // Safety timeout after 5 minutes
+      setTimeout(() => {
+        clearInterval(pollInterval);
+        if (isSyncing) {
+          setIsSyncing(false);
+          setError('Sync timed out. Please try again.');
+        }
+      }, 300000);
+    } catch (err: any) {
+      console.error('Sync error:', err);
+      setError(err.response?.data?.error || 'Failed to start sync');
+      setIsSyncing(false);
     }
   };
 
@@ -79,7 +137,41 @@ export function ConnectPage() {
           <div style={{ color: '#f1f5f9', fontSize: '16px', fontWeight: '700' }}>Perm Bridge</div>
         </div>
 
-        {!isConnected ? (
+        {isSyncing ? (
+          <div style={{ background: '#0e1426', border: '1px solid #1f2740', borderRadius: '16px', padding: '36px', textAlign: 'center' }}>
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" strokeWidth="2" style={{ animation: 'spin 1s linear infinite', margin: '0 auto 20px' }}>
+              <circle cx="12" cy="12" r="9" strokeOpacity="0.3"></circle>
+              <path d="M21 12a9 9 0 00-9-9"></path>
+            </svg>
+            <div style={{ color: '#f1f5f9', fontSize: '18px', fontWeight: '700', marginBottom: '12px' }}>Syncing your Salesforce data...</div>
+            <div style={{ color: '#8891a6', fontSize: '13.5px', marginBottom: '24px' }}>This may take a few minutes</div>
+
+            {/* Progress bar */}
+            <div style={{
+              width: '100%',
+              height: '6px',
+              background: '#1a2138',
+              borderRadius: '3px',
+              overflow: 'hidden',
+              marginBottom: '16px',
+            }}>
+              <div style={{
+                height: '100%',
+                width: `${syncProgress}%`,
+                background: 'linear-gradient(90deg, #1B73E8, #8b5cf6)',
+                transition: 'width 0.3s ease',
+              }}></div>
+            </div>
+
+            <div style={{ color: '#586178', fontSize: '12px' }}>{syncProgress}% complete</div>
+
+            <style>{`
+              @keyframes spin {
+                to { transform: rotate(360deg); }
+              }
+            `}</style>
+          </div>
+        ) : !isConnected ? (
           <div style={{ background: '#0e1426', border: '1px solid #1f2740', borderRadius: '16px', padding: '36px' }}>
             <div style={{
               width: '44px',
