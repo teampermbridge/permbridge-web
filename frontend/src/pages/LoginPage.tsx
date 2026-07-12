@@ -68,8 +68,8 @@ export function LoginPage() {
         <div className="absolute bottom-0 left-0 w-96 h-96 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
       </div>
 
-      <div className="relative z-10 w-full max-w-md">
-        {/* Logo */}
+      <div className="relative z-10 w-full max-w-2xl">
+        {/* Header */}
         <div className="text-center mb-12">
           <div className="flex items-center justify-center gap-3 mb-4">
             <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-blue-600 rounded-lg flex items-center justify-center">
@@ -77,11 +77,29 @@ export function LoginPage() {
             </div>
             <h1 className="text-4xl font-bold text-white">PermBridge</h1>
           </div>
-          <p className="text-slate-400">Enterprise Permission Management</p>
+          <p className="text-slate-400 text-lg mb-2">Master Your Salesforce Permissions</p>
+          <p className="text-slate-500 text-sm max-w-lg mx-auto">
+            AI-powered tools to convert profiles, analyze permission sets, and visualize your permission matrix in minutes
+          </p>
+        </div>
+
+        {/* What You Can Do */}
+        <div className="grid grid-cols-3 gap-3 mb-12">
+          {[
+            { icon: '✨', title: 'Convert Profiles', desc: 'Profile → PermSet in minutes' },
+            { icon: '🔍', title: 'Analyze', desc: '360° permission insights' },
+            { icon: '📊', title: 'Visualize', desc: 'Heatmaps & comparisons' },
+          ].map((item, idx) => (
+            <div key={idx} className="bg-slate-800/40 border border-slate-700 rounded-lg p-4 text-center hover:border-blue-500/50 transition">
+              <div className="text-3xl mb-2">{item.icon}</div>
+              <p className="font-semibold text-white text-sm mb-1">{item.title}</p>
+              <p className="text-xs text-slate-400">{item.desc}</p>
+            </div>
+          ))}
         </div>
 
         {/* Login Card */}
-        <div className="bg-slate-800/50 backdrop-blur-xl border border-slate-700 rounded-2xl p-8 shadow-2xl">
+        <div className="max-w-md mx-auto bg-slate-800/50 backdrop-blur-xl border border-slate-700 rounded-2xl p-8 shadow-2xl">
           <h2 className="text-2xl font-bold text-white mb-2">Welcome Back</h2>
           <p className="text-slate-400 mb-8">Sign in to your account</p>
 
@@ -224,19 +242,6 @@ export function LoginPage() {
           </p>
         </div>
 
-        {/* Features */}
-        <div className="mt-12 grid grid-cols-3 gap-4">
-          {[
-            { label: 'AI-Powered', icon: '⚡' },
-            { label: 'Secure', icon: '🔒' },
-            { label: 'Fast', icon: '🚀' },
-          ].map((feature, idx) => (
-            <div key={idx} className="text-center">
-              <div className="text-2xl mb-1">{feature.icon}</div>
-              <p className="text-xs text-slate-400">{feature.label}</p>
-            </div>
-          ))}
-        </div>
       </div>
 
       {/* Styles for animations */}
