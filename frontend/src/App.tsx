@@ -1,7 +1,9 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './hooks/useAuth';
+import { LandingPage } from './pages/LandingPage';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
+import { ConnectPage } from './pages/ConnectPage';
 import { AuthSuccessPage } from './pages/AuthSuccessPage';
 import { HomePage } from './pages/HomePage';
 import { ConverterPage } from './pages/ConverterPage';
@@ -34,19 +36,13 @@ function App() {
     <Router>
       <Routes>
         {/* Public routes */}
+        <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/connect" element={<ConnectPage />} />
         <Route path="/auth-success" element={<AuthSuccessPage />} />
 
         {/* Protected routes */}
-        <Route
-          path="/"
-          element={
-            <ProtectedRoute>
-              <HomePage />
-            </ProtectedRoute>
-          }
-        />
         <Route
           path="/dashboard"
           element={
@@ -81,7 +77,7 @@ function App() {
         />
 
         {/* Catch all */}
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     </Router>
   );

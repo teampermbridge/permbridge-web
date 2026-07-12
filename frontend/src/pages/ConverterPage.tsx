@@ -1,163 +1,312 @@
-import { Link } from 'react-router-dom';
-import { ArrowLeft, Zap, Send, Clock, CheckCircle2 } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
-import { profiles } from '../api/endpoints';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Check } from 'lucide-react';
+
+const PROFILES = [
+  { name: 'System Administrator', perms: 312 },
+  { name: 'Sales Rep — Enterprise', perms: 184 },
+  { name: 'Sales Rep — SMB', perms: 156 },
+  { name: 'Service Agent', perms: 142 },
+  { name: 'Marketing Manager', perms: 98 },
+  { name: 'Finance Analyst', perms: 121 },
+];
+
+const GROUPS = [
+  { name: 'Sales Core', items: ['Account — Edit', 'Contact — Edit', 'Opportunity — Edit', 'Lead — Edit', 'Task — Edit'] },
+  { name: 'Reporting Access', items: ['Campaign — Read', 'Product — Read', 'Report — Read', 'Dashboard — Read'] },
+  { name: 'Admin Utilities', items: ['Report — Manage', 'Dashboard — Manage', 'Public Group — Manage'] },
+];
+
+const ANALYSIS_LOG = [
+  'Connecting to Acme Robotics — Production…',
+  'Reading object & field permissions…',
+  'Clustering permissions by functional domain…',
+  'Identifying reusable groupings…',
+  'Found 3 logical permission sets.',
+];
 
 export function ConverterPage() {
-  const { data: profilesList = [], isLoading } = useQuery({
-    queryKey: ['profiles'],
-    queryFn: () => profiles.getAll().then((res) => res.data),
-  });
+  const navigate = useNavigate();
+  const [step, setStep] = useState(1);
+  const [selectedProfile, setSelectedProfile] = useState<string | null>(null);
+  const [logLineCount, setLogLineCount] = useState(0);
+
+  const handleAnalyze = async () => {
+    if (!selectedProfile) return;
+    setStep(2);
+    setLogLineCount(0);
+    let i = 0;
+    const tick = () => {
+      i++;
+      setLogLineCount(i);
+      if (i < ANALYSIS_LOG.length) setTimeout(tick, 550);
+      else setTimeout(() => setStep(3), 700);
+    };
+    setTimeout(tick, 500);
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
+    <div style={{ display: 'flex', flexDirection: 'column', width: '100%', height: '100vh', background: '#020617' }}>
       {/* Header */}
-      <header className="border-b border-slate-800 bg-slate-900/50 backdrop-blur-md sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center gap-4">
-          <Link
-            to="/"
-            className="p-2 hover:bg-slate-800 rounded-lg transition text-slate-400 hover:text-white"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </Link>
-          <div>
-            <h1 className="text-2xl font-bold text-white">Profile 2 Permset Converter</h1>
-            <p className="text-sm text-slate-400">Convert Profiles to Permission Sets with AI</p>
-          </div>
+      <div style={{
+        height: '64px',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '16px',
+        padding: '0 28px',
+        borderBottom: '1px solid rgba(148,163,184,0.1)',
+        background: '#0b1020',
+      }}>
+        <button
+          onClick={() => navigate('/dashboard')}
+          style={{
+            width: '34px',
+            height: '34px',
+            borderRadius: '8px',
+            background: '#141b30',
+            border: '1px solid #262f47',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+            color: '#aab3c9',
+          }}
+        >
+          ←
+        </button>
+        <div style={{
+          width: '30px',
+          height: '30px',
+          borderRadius: '8px',
+          background: 'rgba(27,115,232,0.14)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#5b9cf0" strokeWidth="2">
+            <path d="M17 1l4 4-4 4M3 11V9a4 4 0 014-4h14M7 23l-4-4 4-4M21 13v2a4 4 0 01-4 4H3"></path>
+          </svg>
         </div>
-      </header>
+        <div style={{ color: '#f1f5f9', fontSize: '15px', fontWeight: '700' }}>Profile → Permission Set Converter</div>
+        <div style={{ flex: 1 }}></div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          {[1, 2, 3, 4].map((s) => (
+            <div
+              key={s}
+              style={{
+                width: '26px',
+                height: '26px',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '12px',
+                fontWeight: '700',
+                background: step > s ? 'rgba(34,197,94,0.16)' : step === s ? '#1B73E8' : 'transparent',
+                color: step > s ? '#4ade80' : step === s ? '#fff' : '#586178',
+                border: `1px solid ${step > s ? '#227d5b' : step === s ? '#1B73E8' : '#262f47'}`,
+              }}
+            >
+              {s}
+            </div>
+          ))}
+        </div>
+      </div>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Main content */}
-          <div className="lg:col-span-2">
-            <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-8">
-              <h2 className="text-xl font-bold text-white mb-2">Select a Profile</h2>
-              <p className="text-slate-400 mb-6">Choose a Profile from your Salesforce org to convert</p>
-
-              {isLoading ? (
-                <div className="flex items-center justify-center h-96">
-                  <div className="text-center">
-                    <div className="w-12 h-12 rounded-full border-4 border-slate-700 border-t-blue-500 animate-spin mx-auto mb-4"></div>
-                    <p className="text-slate-400">Loading profiles...</p>
+      {/* Content */}
+      <main style={{ flex: 1, overflowY: 'auto', padding: '40px', display: 'flex', justifyContent: 'center' }}>
+        {step === 1 && (
+          <div style={{ width: '100%', maxWidth: '720px' }}>
+            <div style={{ color: '#f1f5f9', fontSize: '20px', fontWeight: '700', marginBottom: '6px' }}>
+              Select a profile to convert
+            </div>
+            <div style={{ color: '#8891a6', fontSize: '13.5px', marginBottom: '24px' }}>
+              Claude will analyze every object and field permission and suggest logical groupings.
+            </div>
+            <div style={{ background: '#0e1426', border: '1px solid #1f2740', borderRadius: '14px', overflow: 'hidden' }}>
+              {PROFILES.map((p, i) => (
+                <div
+                  key={i}
+                  onClick={() => setSelectedProfile(p.name)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '16px 20px',
+                    borderBottom: i < PROFILES.length - 1 ? '1px solid #1a2138' : 'none',
+                    cursor: 'pointer',
+                    background: selectedProfile === p.name ? 'rgba(27,115,232,0.08)' : 'transparent',
+                    transition: 'background 0.12s',
+                  }}
+                >
+                  <div>
+                    <div style={{ color: '#e2e8f0', fontSize: '14.5px', fontWeight: '600' }}>{p.name}</div>
+                    <div style={{ color: '#586178', fontSize: '12.5px', marginTop: '2px' }}>{p.perms} permissions</div>
+                  </div>
+                  <div style={{
+                    width: '20px',
+                    height: '20px',
+                    borderRadius: '50%',
+                    border: `2px solid ${selectedProfile === p.name ? '#1B73E8' : '#3a4562'}`,
+                    background: selectedProfile === p.name ? '#1B73E8' : 'transparent',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}>
+                    {selectedProfile === p.name && <Check size={12} color="#fff" strokeWidth={3} />}
                   </div>
                 </div>
-              ) : profilesList.length === 0 ? (
-                <div className="flex items-center justify-center h-96 bg-slate-900/50 rounded-lg border-2 border-dashed border-slate-700">
-                  <div className="text-center">
-                    <Zap className="w-12 h-12 text-slate-600 mx-auto mb-4" />
-                    <p className="text-slate-400">No profiles found</p>
-                    <p className="text-slate-500 text-sm">Check your Salesforce connection</p>
-                  </div>
-                </div>
+              ))}
+            </div>
+            <button
+              onClick={handleAnalyze}
+              disabled={!selectedProfile}
+              style={{
+                marginTop: '24px',
+                width: '100%',
+                background: selectedProfile ? '#1B73E8' : '#1c2540',
+                border: 'none',
+                color: '#fff',
+                fontSize: '14.5px',
+                fontWeight: '700',
+                padding: '13px 22px',
+                borderRadius: '10px',
+                cursor: selectedProfile ? 'pointer' : 'not-allowed',
+              }}
+            >
+              Analyze with AI
+            </button>
+          </div>
+        )}
+
+        {step === 2 && (
+          <div style={{ width: '100%', maxWidth: '600px', textAlign: 'center' }}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" strokeWidth="2.5" style={{ animation: 'spin 1s linear infinite', margin: '0 auto 24px' }}>
+              <circle cx="12" cy="12" r="9" strokeOpacity="0.25"></circle>
+              <path d="M21 12a9 9 0 00-9-9"></path>
+            </svg>
+            <div style={{ color: '#f1f5f9', fontSize: '18px', fontWeight: '700', marginBottom: '2px' }}>
+              Analyzing {selectedProfile}…
+            </div>
+            <div style={{ color: '#8891a6', fontSize: '13.5px', marginBottom: '24px' }}>
+              This usually takes a few seconds
+            </div>
+            <div style={{ background: '#0e1426', border: '1px solid #1f2740', borderRadius: '14px', padding: '22px', fontFamily: "'JetBrains Mono',monospace" }}>
+              {logLineCount === 0 ? (
+                <div style={{ color: '#586178', fontSize: '13px' }}>Initializing…</div>
               ) : (
-                <div className="space-y-3">
-                  {profilesList.map((profile: any) => (
-                    <button
-                      key={profile.id}
-                      className="w-full text-left p-4 bg-slate-700/30 hover:bg-slate-700/50 border border-slate-700 hover:border-blue-500/50 rounded-lg transition-all group"
-                    >
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <h3 className="font-semibold text-white group-hover:text-blue-400 transition">
-                            {profile.name}
-                          </h3>
-                          <p className="text-sm text-slate-400 mt-1">{profile.description}</p>
-                          <div className="flex items-center gap-4 mt-2">
-                            <span className="text-xs bg-slate-800 text-slate-300 px-2 py-1 rounded">
-                              {profile.permissions_count || 0} permissions
-                            </span>
-                          </div>
-                        </div>
-                        <div className="ml-4 pt-1">
-                          <Send className="w-5 h-5 text-slate-500 group-hover:text-blue-400 transition" />
-                        </div>
-                      </div>
-                    </button>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', textAlign: 'left' }}>
+                  {ANALYSIS_LOG.slice(0, logLineCount).map((line, i) => (
+                    <div key={i} style={{ color: '#8fc0ff', fontSize: '13px', animation: 'lineIn 0.3s ease both' }}>
+                      $ {line}
+                    </div>
                   ))}
                 </div>
               )}
             </div>
           </div>
+        )}
 
-          {/* Sidebar - Info & features */}
-          <div className="lg:col-span-1 space-y-6">
-            {/* How it works */}
-            <div className="card card-hover">
-              <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                <Zap className="w-5 h-5 text-blue-400" />
-                How It Works
-              </h3>
-              <ol className="space-y-3">
-                <li className="flex gap-3">
-                  <span className="flex-shrink-0 w-6 h-6 bg-blue-600 text-white text-sm font-semibold rounded-full flex items-center justify-center">
-                    1
-                  </span>
-                  <span className="text-sm text-slate-300">Select a Profile</span>
-                </li>
-                <li className="flex gap-3">
-                  <span className="flex-shrink-0 w-6 h-6 bg-blue-600 text-white text-sm font-semibold rounded-full flex items-center justify-center">
-                    2
-                  </span>
-                  <span className="text-sm text-slate-300">AI analyzes permissions</span>
-                </li>
-                <li className="flex gap-3">
-                  <span className="flex-shrink-0 w-6 h-6 bg-blue-600 text-white text-sm font-semibold rounded-full flex items-center justify-center">
-                    3
-                  </span>
-                  <span className="text-sm text-slate-300">Review suggestions</span>
-                </li>
-                <li className="flex gap-3">
-                  <span className="flex-shrink-0 w-6 h-6 bg-blue-600 text-white text-sm font-semibold rounded-full flex items-center justify-center">
-                    4
-                  </span>
-                  <span className="text-sm text-slate-300">Create Permission Sets</span>
-                </li>
-              </ol>
+        {step === 3 && (
+          <div style={{ width: '100%', maxWidth: '1080px' }}>
+            <div style={{ marginBottom: '6px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <div style={{ color: '#f1f5f9', fontSize: '20px', fontWeight: '700' }}>Review suggested groupings</div>
+                <div style={{ color: '#8891a6', fontSize: '13.5px' }}>Drag permissions between groups, or rename a group before converting.</div>
+              </div>
+              <button style={{ background: '#141b30', border: '1px solid #262f47', color: '#d5dbe8', fontSize: '12.5px', fontWeight: '600', padding: '8px 14px', borderRadius: '8px', cursor: 'pointer' }}>
+                + New group
+              </button>
             </div>
 
-            {/* Benefits */}
-            <div className="card card-hover">
-              <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                <CheckCircle2 className="w-5 h-5 text-green-400" />
-                Benefits
-              </h3>
-              <ul className="space-y-2 text-sm text-slate-300">
-                <li className="flex items-start gap-2">
-                  <span className="text-green-400 mt-1">✓</span>
-                  <span>AI-powered intelligent grouping</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-green-400 mt-1">✓</span>
-                  <span>Save and reuse templates</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-green-400 mt-1">✓</span>
-                  <span>Undo/redo editing</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-green-400 mt-1">✓</span>
-                  <span>Full audit trail</span>
-                </li>
-              </ul>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '18px', marginTop: '22px', marginBottom: '26px' }}>
+              {GROUPS.map((g, i) => (
+                <div key={i} style={{ background: '#0e1426', border: '1px solid #1f2740', borderRadius: '14px', padding: '18px', minHeight: '220px', display: 'flex', flexDirection: 'column' }}>
+                  <div style={{ color: '#f1f5f9', fontSize: '14.5px', fontWeight: '700', marginBottom: '4px' }}>{g.name}</div>
+                  <div style={{ color: '#586178', fontSize: '12px', marginBottom: '12px' }}>{g.items.length} permissions</div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flex: 1 }}>
+                    {g.items.map((item, j) => (
+                      <div key={j} style={{ background: '#141b30', border: '1px solid #232c45', color: '#d5dbe8', fontSize: '12.5px', padding: '8px 10px', borderRadius: '7px', cursor: 'grab' }}>
+                        {item}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
             </div>
 
-            {/* Timeline */}
-            <div className="card">
-              <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                <Clock className="w-5 h-5 text-yellow-400" />
-                Coming Soon
-              </h3>
-              <ul className="space-y-2 text-sm text-slate-300">
-                <li>• Batch convert profiles</li>
-                <li>• Real-time AI streaming</li>
-                <li>• Export to JSON/CSV</li>
-                <li>• Slack notifications</li>
-              </ul>
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button onClick={() => setStep(1)} style={{ background: '#141b30', border: '1px solid #262f47', color: '#d5dbe8', fontSize: '13.5px', fontWeight: '600', padding: '12px 20px', borderRadius: '10px', cursor: 'pointer' }}>
+                Back
+              </button>
+              <button onClick={() => setStep(4)} style={{ flex: 1, background: '#1B73E8', border: 'none', color: '#fff', fontSize: '14px', fontWeight: '700', padding: '12px 22px', borderRadius: '10px', cursor: 'pointer' }}>
+                Convert to {GROUPS.length} permission sets
+              </button>
             </div>
           </div>
-        </div>
+        )}
+
+        {step === 4 && (
+          <div style={{ width: '100%', maxWidth: '640px', textAlign: 'center' }}>
+            <div style={{
+              width: '36px',
+              height: '36px',
+              borderRadius: '50%',
+              background: 'rgba(34,197,94,0.16)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 8px',
+            }}>
+              <Check size={18} color="#4ade80" strokeWidth={3} />
+            </div>
+            <div style={{ color: '#f1f5f9', fontSize: '20px', fontWeight: '700', marginBottom: '2px' }}>
+              {GROUPS.length} permission sets created
+            </div>
+            <div style={{ color: '#8891a6', fontSize: '13.5px', marginBottom: '26px' }}>
+              Converted from {selectedProfile} in 3m 48s.
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '28px' }}>
+              {GROUPS.map((g, i) => (
+                <div key={i} style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  background: '#0e1426',
+                  border: '1px solid #1f2740',
+                  borderRadius: '12px',
+                  padding: '16px 18px',
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <div style={{ width: '9px', height: '9px', borderRadius: '50%', background: '#f472b6' }}></div>
+                    <span style={{ color: '#e2e8f0', fontSize: '14px', fontWeight: '600' }}>{g.name}</span>
+                  </div>
+                  <span style={{ color: '#8891a6', fontSize: '12.5px' }}>{g.items.length} permissions</span>
+                </div>
+              ))}
+            </div>
+
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button onClick={() => navigate('/dashboard')} style={{ flex: 1, background: '#1B73E8', border: 'none', color: '#fff', fontSize: '14px', fontWeight: '700', padding: '12px 22px', borderRadius: '10px', cursor: 'pointer' }}>
+                Done
+              </button>
+              <button onClick={() => setStep(1)} style={{ flex: 1, background: '#141b30', border: '1px solid #262f47', color: '#d5dbe8', fontSize: '13.5px', fontWeight: '600', padding: '12px 20px', borderRadius: '10px', cursor: 'pointer' }}>
+                Convert another profile
+              </button>
+            </div>
+          </div>
+        )}
       </main>
+
+      <style>{`
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+        @keyframes lineIn {
+          from { opacity: 0; transform: translateY(4px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
     </div>
   );
 }

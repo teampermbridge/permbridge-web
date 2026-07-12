@@ -1,183 +1,284 @@
+import { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
+import { useAuthStore } from '../store/authStore';
 import { Link } from 'react-router-dom';
-import { LogOut, Users, Zap, Grid3x3, Settings, Bell, Search, BarChart3, ArrowUpRight } from 'lucide-react';
+import { LogOut, Bell, ChevronDown, Zap, BarChart3, Grid3x3, ArrowRight, TrendingUp } from 'lucide-react';
 
 export function HomePage() {
   const { user, logout } = useAuth();
+  const organization = useAuthStore((state) => state.organization);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [orgMenuOpen, setOrgMenuOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
-      {/* Header */}
-      <header className="border-b border-slate-800 bg-slate-900/50 backdrop-blur-md sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-blue-600 rounded-lg flex items-center justify-center">
-              <Users className="w-6 h-6 text-white" />
+    <div style={{ display: 'flex', flexDirection: 'column', width: '100%', minHeight: '100vh', background: '#020617' }}>
+      {/* Top Bar */}
+      <div style={{
+        height: '64px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '0 28px',
+        borderBottom: '1px solid rgba(148,163,184,0.1)',
+        background: '#0b1020',
+      }}>
+        {/* Left */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '28px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <svg width="30" height="30" viewBox="0 0 96 96" fill="none">
+              <rect width="96" height="96" rx="22" fill="#1B1F3B"></rect>
+              <path d="M33 27 L33 69 M33 48 L58 27 M33 48 L60 69" stroke="#FFFFFF" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" fill="none"></path>
+              <circle cx="67" cy="25" r="8" fill="#1B73E8"></circle>
+            </svg>
+            <div style={{ color: '#f1f5f9', fontSize: '15.5px', fontWeight: '700' }}>Perm Bridge</div>
+          </div>
+          <div style={{ position: 'relative' }}>
+            <div
+              onClick={() => setOrgMenuOpen(!orgMenuOpen)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                background: '#141b30',
+                border: '1px solid #262f47',
+                padding: '7px 12px',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                color: '#d5dbe8',
+                fontSize: '13.5px',
+                fontWeight: '600',
+              }}
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#8fa0c9" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 21h18M6 21V7l6-4 6 4v14M10 21v-6h4v6"></path>
+              </svg>
+              {organization?.name || 'Select Org'}
+              <ChevronDown size={13} color="#6b7488" />
             </div>
-            <div>
-              <h1 className="text-xl font-bold text-white">PermBridge</h1>
-              <p className="text-xs text-slate-400">Permission Management</p>
+            {orgMenuOpen && (
+              <div style={{
+                position: 'absolute',
+                top: '42px',
+                left: 0,
+                width: '230px',
+                background: '#131a2e',
+                border: '1px solid #262f47',
+                borderRadius: '10px',
+                padding: '6px',
+                boxShadow: '0 12px 32px rgba(0,0,0,0.5)',
+                zIndex: 20,
+              }}>
+                {['Acme Robotics — Production', 'Acme Robotics — Sandbox'].map((org, i) => (
+                  <div key={i} style={{
+                    padding: '9px 10px',
+                    borderRadius: '7px',
+                    color: i === 0 ? '#e2e8f0' : '#aab3c9',
+                    fontSize: '13px',
+                    background: i === 0 ? 'rgba(27,115,232,0.12)' : 'transparent',
+                    cursor: 'pointer',
+                  }}>
+                    {org}
+                  </div>
+                ))}
+                <div style={{ padding: '9px 10px', borderRadius: '7px', color: '#aab3c9', fontSize: '13px', cursor: 'pointer' }}>
+                  + Connect new org
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Right */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '18px' }}>
+          <div style={{ color: '#8fa0c9', cursor: 'pointer' }}>
+            <Bell size={19} />
+          </div>
+          <div style={{ width: '1px', height: '22px', background: '#232c45' }}></div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '9px', cursor: 'pointer', position: 'relative' }} onClick={() => setUserMenuOpen(!userMenuOpen)}>
+            <div style={{
+              width: '30px',
+              height: '30px',
+              borderRadius: '50%',
+              background: 'linear-gradient(135deg,#1B73E8,#8b5cf6)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#fff',
+              fontSize: '12.5px',
+              fontWeight: '700',
+            }}>
+              {user?.email?.[0].toUpperCase()}T
             </div>
+            <ChevronDown size={13} color="#6b7488" />
+            {userMenuOpen && (
+              <div style={{
+                position: 'absolute',
+                top: '56px',
+                right: 0,
+                width: '190px',
+                background: '#131a2e',
+                border: '1px solid #262f47',
+                borderRadius: '10px',
+                padding: '6px',
+                boxShadow: '0 12px 32px rgba(0,0,0,0.5)',
+                zIndex: 20,
+              }}>
+                <div style={{ padding: '9px 10px', borderRadius: '7px', color: '#aab3c9', fontSize: '13px' }}>
+                  {user?.email}
+                </div>
+                <div style={{ padding: '9px 10px', borderRadius: '7px', color: '#aab3c9', fontSize: '13px', cursor: 'pointer' }}>
+                  Settings
+                </div>
+                <div
+                  onClick={() => { logout(); setUserMenuOpen(false); }}
+                  style={{ padding: '9px 10px', borderRadius: '7px', color: '#f87171', fontSize: '13px', fontWeight: '600', cursor: 'pointer' }}
+                >
+                  Log out
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <main style={{ flex: 1, overflowY: 'auto', padding: '40px 48px 60px' }}>
+        <div style={{ maxWidth: '1180px', margin: '0 auto' }}>
+          <h1 style={{
+            color: '#f1f5f9',
+            fontSize: '26px',
+            fontWeight: '700',
+            margin: '0 0 4px 0',
+            letterSpacing: '-0.4px',
+          }}>Good afternoon, {user?.email?.split('@')[0]}</h1>
+          <p style={{
+            color: '#8891a6',
+            fontSize: '14.5px',
+            margin: '0 0 32px 0',
+          }}>Here's what's happening in {organization?.name || 'your org'}.</p>
+
+          {/* Stats */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '18px', marginBottom: '40px' }}>
+            {[
+              { label: 'Permission sets managed', value: '128', subtitle: '↑ 14 this month', color: '#5b9cf0' },
+              { label: 'Profiles analyzed', value: '42', subtitle: 'of 58 total profiles', color: '#a78bfa' },
+              { label: 'Avg. conversion time', value: '4m 12s', subtitle: 'well under the 5-min target', color: '#4ade80' },
+            ].map((card, i) => (
+              <div key={i} style={{
+                background: '#0e1426',
+                border: '1px solid #1f2740',
+                borderRadius: '14px',
+                padding: '22px',
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
+                  <div style={{ color: '#8891a6', fontSize: '13px', fontWeight: '600' }}>{card.label}</div>
+                  <div style={{
+                    width: '32px',
+                    height: '32px',
+                    borderRadius: '8px',
+                    background: `rgba(${card.color === '#5b9cf0' ? '27,115,232' : card.color === '#a78bfa' ? '139,92,246' : '34,197,94'},0.14)`,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}>
+                    {i === 0 && <Zap size={16} color={card.color} />}
+                    {i === 1 && <BarChart3 size={16} color={card.color} />}
+                    {i === 2 && <TrendingUp size={16} color={card.color} />}
+                  </div>
+                </div>
+                <div style={{ color: '#f1f5f9', fontSize: '30px', fontWeight: '800', letterSpacing: '-0.5px' }}>
+                  {card.value}
+                </div>
+                <div style={{
+                  color: i === 0 ? '#4ade80' : '#94a3b8',
+                  fontSize: '12.5px',
+                  fontWeight: '600',
+                  marginTop: '6px',
+                }}>
+                  {card.subtitle}
+                </div>
+              </div>
+            ))}
           </div>
 
-          <div className="flex items-center gap-4">
-            <div className="hidden sm:flex items-center bg-slate-800 rounded-lg px-3 py-2 gap-2">
-              <Search className="w-4 h-4 text-slate-500" />
-              <input
-                type="text"
-                placeholder="Search..."
-                className="bg-transparent text-white placeholder-slate-500 outline-none text-sm w-32"
-              />
-            </div>
-
-            <button className="relative p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition">
-              <Bell className="w-5 h-5" />
-              <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-            </button>
-
-            <div className="flex items-center gap-3 pl-4 border-l border-slate-800">
-              <div className="text-right hidden sm:block">
-                <p className="text-sm font-semibold text-white">{user?.name}</p>
-                <p className="text-xs text-slate-500">{user?.email}</p>
-              </div>
-              <button
-                onClick={logout}
-                className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition"
-                title="Logout"
+          {/* Tools */}
+          <div style={{ color: '#c3cadb', fontSize: '13px', fontWeight: '700', letterSpacing: '0.6px', textTransform: 'uppercase', marginBottom: '16px' }}>
+            Tools
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '20px' }}>
+            {[
+              {
+                title: 'Profile → Permission Set Converter',
+                desc: 'AI groups a profile\'s permissions into logical, reusable permission sets.',
+                color: '#5b9cf0',
+                icon: Zap,
+                link: '/converter',
+              },
+              {
+                title: 'Permission Set Summarizer',
+                desc: 'A 360° snapshot of any Profile, Permission Set or Group — objects, fields, users & more.',
+                color: '#a78bfa',
+                icon: BarChart3,
+                link: '/summarizer',
+              },
+              {
+                title: 'Permission Matrix X-Ray',
+                desc: 'Cross-compare Profiles, Permission Sets and Users — object by object.',
+                color: '#4ade80',
+                icon: Grid3x3,
+                link: '/matrix',
+              },
+            ].map((tool, i) => (
+              <Link
+                key={i}
+                to={tool.link}
+                style={{
+                  textDecoration: 'none',
+                  cursor: 'pointer',
+                }}
               >
-                <LogOut className="w-5 h-5" />
-              </button>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* Main content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        {/* Welcome section */}
-        <div className="mb-12">
-          <div className="bg-gradient-to-r from-blue-600/10 to-purple-600/10 border border-blue-500/20 rounded-2xl p-8 mb-8">
-            <h2 className="text-3xl font-bold text-white mb-2">Welcome back, {user?.name?.split(' ')[0]}</h2>
-            <p className="text-slate-300">
-              Org ID: <code className="bg-slate-800 px-2 py-1 rounded text-slate-200 font-mono text-sm">{user?.salesforceOrgId}</code>
-            </p>
-          </div>
-        </div>
-
-        {/* Quick stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-12">
-          {[
-            { label: 'Profiles', value: '12', change: '+2', icon: Users },
-            { label: 'Permission Sets', value: '48', change: '+8', icon: Grid3x3 },
-            { label: 'Conversions', value: '6', change: '+1', icon: Zap },
-            { label: 'Audit Logs', value: '156', change: '+32', icon: BarChart3 },
-          ].map((stat, idx) => {
-            const Icon = stat.icon;
-            return (
-              <div key={idx} className="bg-slate-800/50 border border-slate-700 rounded-xl p-6 hover:border-slate-600 transition">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="w-10 h-10 bg-gradient-to-br from-blue-400/20 to-blue-600/20 rounded-lg flex items-center justify-center">
-                    <Icon className="w-5 h-5 text-blue-400" />
+                <div style={{
+                  background: '#0e1426',
+                  border: '1px solid #1f2740',
+                  borderRadius: '16px',
+                  padding: '26px',
+                  transition: 'transform 0.15s, border-color 0.15s',
+                  cursor: 'pointer',
+                  height: '100%',
+                }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                    e.currentTarget.style.borderColor = `${tool.color}80`;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.borderColor = '#1f2740';
+                  }}
+                >
+                  <div style={{
+                    width: '44px',
+                    height: '44px',
+                    borderRadius: '11px',
+                    background: `rgba(${tool.color === '#5b9cf0' ? '27,115,232' : tool.color === '#a78bfa' ? '139,92,246' : '34,197,94'},0.14)`,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginBottom: '20px',
+                  }}>
+                    {tool.icon && <tool.icon size={21} color={tool.color} />}
                   </div>
-                  <div className="flex items-center gap-1 text-green-400 text-sm font-semibold">
-                    <ArrowUpRight className="w-4 h-4" />
-                    {stat.change}
+                  <div style={{ color: '#f1f5f9', fontSize: '16.5px', fontWeight: '700', marginBottom: '8px' }}>
+                    {tool.title}
                   </div>
-                </div>
-                <p className="text-slate-400 text-sm mb-1">{stat.label}</p>
-                <p className="text-3xl font-bold text-white">{stat.value}</p>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Feature cards */}
-        <div className="mb-12">
-          <h3 className="text-2xl font-bold text-white mb-6">Core Features</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Converter */}
-            <Link to="/converter">
-              <div className="group bg-gradient-to-br from-slate-800/50 to-slate-900/50 border border-slate-700 rounded-xl p-8 hover:border-blue-500/50 transition-all duration-300 h-full cursor-pointer hover:shadow-lg hover:shadow-blue-500/10">
-                <div className="mb-4">
-                  <div className="w-12 h-12 bg-gradient-to-br from-blue-400/20 to-blue-600/20 rounded-lg flex items-center justify-center group-hover:from-blue-400/40 group-hover:to-blue-600/40 transition">
-                    <Zap className="w-6 h-6 text-blue-400" />
+                  <div style={{ color: '#8891a6', fontSize: '13.5px', lineHeight: '1.55', marginBottom: '18px' }}>
+                    {tool.desc}
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: tool.color, fontSize: '13px', fontWeight: '600' }}>
+                    Open <ArrowRight size={13} />
                   </div>
                 </div>
-                <h4 className="text-xl font-bold text-white mb-2 group-hover:text-blue-400 transition">
-                  Profile 2 Permset Converter
-                </h4>
-                <p className="text-slate-400 text-sm mb-4">
-                  Convert Profiles to Permission Sets using AI-powered intelligent grouping. Suggest names and organize permissions logically.
-                </p>
-                <div className="flex items-center text-blue-400 text-sm font-semibold group-hover:gap-2 transition-all">
-                  Get started
-                  <ArrowUpRight className="w-4 h-4 ml-1 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
-                </div>
-              </div>
-            </Link>
-
-            {/* Summarizer */}
-            <Link to="/summarizer">
-              <div className="group bg-gradient-to-br from-slate-800/50 to-slate-900/50 border border-slate-700 rounded-xl p-8 hover:border-purple-500/50 transition-all duration-300 h-full cursor-pointer hover:shadow-lg hover:shadow-purple-500/10">
-                <div className="mb-4">
-                  <div className="w-12 h-12 bg-gradient-to-br from-purple-400/20 to-purple-600/20 rounded-lg flex items-center justify-center group-hover:from-purple-400/40 group-hover:to-purple-600/40 transition">
-                    <BarChart3 className="w-6 h-6 text-purple-400" />
-                  </div>
-                </div>
-                <h4 className="text-xl font-bold text-white mb-2 group-hover:text-purple-400 transition">
-                  Permission Set Summarizer
-                </h4>
-                <p className="text-slate-400 text-sm mb-4">
-                  Get a comprehensive 360° view of any Permission Set with object permissions, field access, and related metadata breakdown.
-                </p>
-                <div className="flex items-center text-purple-400 text-sm font-semibold group-hover:gap-2 transition-all">
-                  Get started
-                  <ArrowUpRight className="w-4 h-4 ml-1 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
-                </div>
-              </div>
-            </Link>
-
-            {/* Matrix */}
-            <Link to="/matrix">
-              <div className="group bg-gradient-to-br from-slate-800/50 to-slate-900/50 border border-slate-700 rounded-xl p-8 hover:border-indigo-500/50 transition-all duration-300 h-full cursor-pointer hover:shadow-lg hover:shadow-indigo-500/10">
-                <div className="mb-4">
-                  <div className="w-12 h-12 bg-gradient-to-br from-indigo-400/20 to-indigo-600/20 rounded-lg flex items-center justify-center group-hover:from-indigo-400/40 group-hover:to-indigo-600/40 transition">
-                    <Grid3x3 className="w-6 h-6 text-indigo-400" />
-                  </div>
-                </div>
-                <h4 className="text-xl font-bold text-white mb-2 group-hover:text-indigo-400 transition">
-                  Permission Matrix X-Ray
-                </h4>
-                <p className="text-slate-400 text-sm mb-4">
-                  Compare permissions across profiles with interactive heatmaps, detect conflicts, and analyze permission inheritance patterns.
-                </p>
-                <div className="flex items-center text-indigo-400 text-sm font-semibold group-hover:gap-2 transition-all">
-                  Get started
-                  <ArrowUpRight className="w-4 h-4 ml-1 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
-                </div>
-              </div>
-            </Link>
-          </div>
-        </div>
-
-        {/* Info banner */}
-        <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6 flex items-start gap-4">
-          <div className="w-12 h-12 bg-gradient-to-br from-green-400/20 to-green-600/20 rounded-lg flex items-center justify-center flex-shrink-0">
-            <Settings className="w-6 h-6 text-green-400" />
-          </div>
-          <div className="flex-1">
-            <h4 className="text-lg font-bold text-white mb-1">Connected & Synced</h4>
-            <p className="text-slate-400 text-sm mb-4">
-              Your Salesforce org is connected and data is automatically synced hourly. All conversions and changes are logged for audit compliance.
-            </p>
-            <div className="flex gap-2">
-              <button className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white text-sm font-semibold rounded-lg transition">
-                View Audit Logs
-              </button>
-              <button className="px-4 py-2 text-slate-300 hover:text-white text-sm font-semibold transition">
-                Settings
-              </button>
-            </div>
+              </Link>
+            ))}
           </div>
         </div>
       </main>

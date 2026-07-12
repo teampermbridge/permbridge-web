@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
-import { Lock, Mail, Building2, User, ArrowRight } from 'lucide-react';
+import { ArrowRight, Check } from 'lucide-react';
 import client from '../api/client';
 
 export function RegisterPage() {
@@ -11,7 +11,7 @@ export function RegisterPage() {
   const setOrganization = useAuthStore((state) => state.setOrganization);
   const setOrganizations = useAuthStore((state) => state.setOrganizations);
   const setError = useAuthStore((state) => state.setError);
-  const setLoading = useAuthStore((state) => state.setLoading);
+  const error = useAuthStore((state) => state.error);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -32,7 +32,7 @@ export function RegisterPage() {
         organization_name: organizationName,
       });
 
-      const { token, user, organization, organizations } = response.data;
+      const { token, user, organization } = response.data;
 
       localStorage.setItem('auth_token', token);
       setToken(token);
@@ -40,7 +40,7 @@ export function RegisterPage() {
       setOrganization(organization);
       setOrganizations([organization]);
 
-      navigate('/dashboard');
+      navigate('/connect');
     } catch (error: any) {
       console.error('Registration error:', error);
       setError(error.response?.data?.error || 'Registration failed');
@@ -50,147 +50,335 @@ export function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
-        <div className="absolute bottom-0 left-0 w-96 h-96 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
-      </div>
+    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', width: '100%', height: '100vh', background: '#020617' }}>
+      {/* Left Panel - Same as Login */}
+      <div style={{
+        background: 'linear-gradient(160deg,#1B1F3B 0%,#0d1026 55%,#020617 100%)',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'space-between',
+        padding: '56px 64px',
+        position: 'relative',
+        overflow: 'hidden'
+      }}>
+        <div style={{
+          position: 'absolute',
+          top: '-120px',
+          right: '-120px',
+          width: '420px',
+          height: '420px',
+          borderRadius: '50%',
+          background: 'radial-gradient(circle,rgba(27,115,232,0.25) 0%,rgba(27,115,232,0) 70%)',
+        }}></div>
+        <div style={{
+          position: 'absolute',
+          bottom: '-160px',
+          left: '-100px',
+          width: '480px',
+          height: '480px',
+          borderRadius: '50%',
+          background: 'radial-gradient(circle,rgba(139,92,246,0.18) 0%,rgba(139,92,246,0) 70%)',
+        }}></div>
 
-      <div className="relative z-10 min-h-screen flex items-center justify-center px-4">
-        <div className="w-full max-w-md">
-          <div className="bg-slate-800/50 backdrop-blur-xl border border-slate-700 rounded-2xl p-8 shadow-2xl">
-            {/* Header */}
-            <div className="mb-8">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-blue-600 rounded-lg flex items-center justify-center">
-                  <Lock className="w-6 h-6 text-white" />
-                </div>
-                <h1 className="text-2xl font-bold text-white">PermBridge</h1>
-              </div>
-              <h2 className="text-2xl font-bold text-white mb-2">Create Account</h2>
-              <p className="text-slate-400">Start managing permissions today</p>
+        <div style={{ position: 'relative' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '22px' }}>
+            <svg width="40" height="40" viewBox="0 0 96 96" fill="none">
+              <rect width="96" height="96" rx="22" fill="rgba(255,255,255,0.08)"></rect>
+              <path d="M33 27 L33 69 M33 48 L58 27 M33 48 L60 69" stroke="#FFFFFF" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" fill="none"></path>
+              <circle cx="67" cy="25" r="8" fill="#4f9cf9"></circle>
+            </svg>
+            <div style={{ color: '#f1f5f9', fontSize: '19px', fontWeight: '700', letterSpacing: '-0.2px' }}>
+              Kairos <span style={{ color: '#7a8299', fontWeight: '500' }}>/ Perm Bridge</span>
             </div>
+          </div>
 
-            {/* Form */}
-            <form onSubmit={handleRegister} className="space-y-4">
-              {/* Email */}
-              <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">
-                  <Mail className="w-4 h-4 inline mr-2" />
-                  Email
-                </label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@example.com"
-                  required
-                  className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 text-white rounded-lg focus:border-blue-500 outline-none transition"
-                />
-              </div>
+          <div style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px',
+            background: 'rgba(79,156,249,0.12)',
+            border: '1px solid rgba(79,156,249,0.3)',
+            color: '#8fc0ff',
+            fontSize: '12.5px',
+            fontWeight: '600',
+            padding: '6px 12px',
+            borderRadius: '20px',
+            marginBottom: '22px',
+          }}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 3l1.9 4.9L19 9l-4.9 1.9L12 16l-1.9-5.1L5 9l5.1-1.1L12 3z"></path>
+            </svg>
+            Built for any Salesforce permission model
+          </div>
 
-              {/* Full Name */}
-              <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">
-                  <User className="w-4 h-4 inline mr-2" />
-                  Full Name
-                </label>
-                <input
-                  type="text"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  placeholder="John Doe"
-                  required
-                  className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 text-white rounded-lg focus:border-blue-500 outline-none transition"
-                />
-              </div>
+          <h1 style={{
+            color: '#f8fafc',
+            fontSize: '42px',
+            lineHeight: '1.15',
+            fontWeight: '800',
+            letterSpacing: '-1px',
+            margin: '0 0 18px 0',
+          }}>The permission management platform built for how your org actually works.</h1>
 
-              {/* Organization Name */}
-              <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">
-                  <Building2 className="w-4 h-4 inline mr-2" />
-                  Organization Name
-                </label>
-                <input
-                  type="text"
-                  value={organizationName}
-                  onChange={(e) => setOrganizationName(e.target.value)}
-                  placeholder="Acme Corp"
-                  required
-                  className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 text-white rounded-lg focus:border-blue-500 outline-none transition"
-                />
-              </div>
+          <p style={{
+            color: '#9aa3ba',
+            fontSize: '16px',
+            lineHeight: '1.6',
+            margin: '0 0 40px 0',
+          }}>Whether you run on Profiles, Permission Sets, or both — Perm Bridge helps you convert, summarize and audit access with an AI copilot that explains every change.</p>
 
-              {/* Password */}
-              <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">
-                  <Lock className="w-4 h-4 inline mr-2" />
-                  Password
-                </label>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  required
-                  minLength={8}
-                  className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 text-white rounded-lg focus:border-blue-500 outline-none transition"
-                />
-                <p className="text-xs text-slate-500 mt-1">Min. 8 characters</p>
-              </div>
-
-              {/* Error */}
-              {useAuthStore((state) => state.error) && (
-                <div className="p-3 bg-red-500/20 border border-red-500/50 rounded-lg">
-                  <p className="text-sm text-red-400">{useAuthStore((state) => state.error)}</p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            {[
+              'Works with Profile-based or Permission-Set-based orgs',
+              'AI-assisted conversion in under 5 minutes',
+              'SOC 2 Type II certified, SSO / SAML ready',
+            ].map((text, idx) => (
+              <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '12px', color: '#c3cadb', fontSize: '14.5px' }}>
+                <div style={{
+                  width: '26px',
+                  height: '26px',
+                  borderRadius: '7px',
+                  background: 'rgba(34,197,94,0.15)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                }}>
+                  <Check size={14} color="#4ade80" strokeWidth={3} />
                 </div>
-              )}
-
-              {/* Submit */}
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:from-slate-600 disabled:to-slate-700 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 flex items-center justify-center gap-2"
-              >
-                {isSubmitting ? (
-                  <>
-                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                    Creating account...
-                  </>
-                ) : (
-                  <>
-                    Create Account
-                    <ArrowRight className="w-4 h-4" />
-                  </>
-                )}
-              </button>
-            </form>
-
-            {/* Divider */}
-            <div className="relative my-6">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-slate-700"></div>
+                {text}
               </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-3 bg-slate-800/50 text-slate-400">Already have an account?</span>
-              </div>
-            </div>
-
-            {/* Login Link */}
-            <Link
-              to="/login"
-              className="w-full block text-center px-4 py-3 border border-slate-600 text-white font-semibold rounded-lg hover:bg-slate-700/50 transition"
-            >
-              Sign In Instead
-            </Link>
-
-            {/* Footer */}
-            <p className="text-center text-xs text-slate-500 mt-6">
-              By registering, you agree to our Terms of Service and Privacy Policy
-            </p>
+            ))}
           </div>
         </div>
+
+        <div style={{ position: 'relative', display: 'flex', gap: '36px', color: '#6b7488', fontSize: '12.5px' }}>
+          <div>© 2026 Kairos Apps</div>
+          <div>Privacy</div>
+          <div>Security</div>
+        </div>
       </div>
+
+      {/* Right Panel - Registration */}
+      <div style={{
+        background: '#0b1020',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '40px',
+      }}>
+        <div style={{ width: '100%', maxWidth: '380px' }}>
+          <h2 style={{
+            color: '#f1f5f9',
+            fontSize: '26px',
+            fontWeight: '700',
+            margin: '0 0 6px 0',
+            letterSpacing: '-0.4px',
+          }}>Create Account</h2>
+          <p style={{
+            color: '#8891a6',
+            fontSize: '14.5px',
+            margin: '0 0 32px 0',
+          }}>Start managing permissions today</p>
+
+          <form onSubmit={handleRegister} style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '22px' }}>
+            <div>
+              <label style={{
+                display: 'block',
+                color: '#aab3c9',
+                fontSize: '12.5px',
+                fontWeight: '600',
+                marginBottom: '7px',
+              }}>Work email</label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@company.com"
+                style={{
+                  width: '100%',
+                  background: '#0f1526',
+                  border: '1px solid #262f47',
+                  color: '#e8ecf5',
+                  fontSize: '14.5px',
+                  padding: '11px 13px',
+                  borderRadius: '9px',
+                  outline: 'none',
+                  boxSizing: 'border-box',
+                }}
+              />
+            </div>
+
+            <div>
+              <label style={{
+                display: 'block',
+                color: '#aab3c9',
+                fontSize: '12.5px',
+                fontWeight: '600',
+                marginBottom: '7px',
+              }}>Full name</label>
+              <input
+                type="text"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                placeholder="John Doe"
+                style={{
+                  width: '100%',
+                  background: '#0f1526',
+                  border: '1px solid #262f47',
+                  color: '#e8ecf5',
+                  fontSize: '14.5px',
+                  padding: '11px 13px',
+                  borderRadius: '9px',
+                  outline: 'none',
+                  boxSizing: 'border-box',
+                }}
+              />
+            </div>
+
+            <div>
+              <label style={{
+                display: 'block',
+                color: '#aab3c9',
+                fontSize: '12.5px',
+                fontWeight: '600',
+                marginBottom: '7px',
+              }}>Organization name</label>
+              <input
+                type="text"
+                value={organizationName}
+                onChange={(e) => setOrganizationName(e.target.value)}
+                placeholder="Acme Corp"
+                style={{
+                  width: '100%',
+                  background: '#0f1526',
+                  border: '1px solid #262f47',
+                  color: '#e8ecf5',
+                  fontSize: '14.5px',
+                  padding: '11px 13px',
+                  borderRadius: '9px',
+                  outline: 'none',
+                  boxSizing: 'border-box',
+                }}
+              />
+            </div>
+
+            <div>
+              <label style={{
+                display: 'block',
+                color: '#aab3c9',
+                fontSize: '12.5px',
+                fontWeight: '600',
+                marginBottom: '7px',
+              }}>Password</label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••••"
+                required
+                minLength={8}
+                style={{
+                  width: '100%',
+                  background: '#0f1526',
+                  border: '1px solid #262f47',
+                  color: '#e8ecf5',
+                  fontSize: '14.5px',
+                  padding: '11px 13px',
+                  borderRadius: '9px',
+                  outline: 'none',
+                  boxSizing: 'border-box',
+                }}
+              />
+              <p style={{ color: '#586178', fontSize: '12.5px', margin: '6px 0 0 0' }}>Min. 8 characters</p>
+            </div>
+
+            {error && (
+              <div style={{ padding: '3px', background: '#f87171', color: '#fff', fontSize: '12px', borderRadius: '6px' }}>
+                {error}
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              style={{
+                width: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                background: '#1B73E8',
+                border: 'none',
+                color: '#fff',
+                fontSize: '14.5px',
+                fontWeight: '700',
+                padding: '13px 16px',
+                borderRadius: '10px',
+                cursor: 'pointer',
+                boxShadow: '0 8px 24px -8px rgba(27,115,232,0.6)',
+                transition: 'background 0.15s',
+                marginTop: '8px',
+              }}
+              onMouseEnter={(e) => !isSubmitting && (e.currentTarget.style.background = '#1863c9')}
+              onMouseLeave={(e) => !isSubmitting && (e.currentTarget.style.background = '#1B73E8')}
+            >
+              {isSubmitting ? (
+                <>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" style={{ animation: 'spin 0.7s linear infinite' }}>
+                    <circle cx="12" cy="12" r="9" strokeOpacity="0.3"></circle>
+                    <path d="M21 12a9 9 0 00-9-9"></path>
+                  </svg>
+                  Creating account…
+                </>
+              ) : (
+                <>
+                  Create Account
+                  <ArrowRight size={16} />
+                </>
+              )}
+            </button>
+          </form>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '14px', margin: '0' }}>
+            <div style={{ flex: 1, height: '1px', background: '#1f2740' }}></div>
+            <div style={{ color: '#586178', fontSize: '12px', fontWeight: '500' }}>Already have an account?</div>
+            <div style={{ flex: 1, height: '1px', background: '#1f2740' }}></div>
+          </div>
+
+          <Link
+            to="/login"
+            style={{
+              display: 'block',
+              textAlign: 'center',
+              padding: '13px 16px',
+              border: '1px solid #262f47',
+              color: '#d5dbe8',
+              fontSize: '13px',
+              fontWeight: '600',
+              marginTop: '14px',
+              borderRadius: '10px',
+              textDecoration: 'none',
+              cursor: 'pointer',
+              transition: 'background 0.15s',
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.04)'}
+            onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+          >
+            Sign In Instead
+          </Link>
+
+          <p style={{ textAlign: 'center', color: '#6b7488', fontSize: '12.5px', margin: '20px 0 0 0' }}>
+            By registering, you agree to our Terms of Service and Privacy Policy
+          </p>
+        </div>
+      </div>
+
+      <style>{`
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
     </div>
   );
 }

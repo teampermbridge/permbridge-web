@@ -1,163 +1,254 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Grid3x3, Zap, AlertCircle, TrendingUp, Lock } from 'lucide-react';
+import { Grid3x3 } from 'lucide-react';
 
 export function MatrixPage() {
+  const [editMode, setEditMode] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState('Object Permissions (CRUD)');
+  const [selectedObject, setSelectedObject] = useState<string | null>(null);
+  const [categoryOpen, setCategoryOpen] = useState(false);
+  const [objectOpen, setObjectOpen] = useState(false);
+
+  const categories = [
+    'Object Permissions (CRUD)',
+    'Field Permissions (FLS)',
+    'Record Type Visibility',
+    'Tab Visibility',
+    'Apex Classes',
+    'Visualforce Pages',
+    'Custom Permissions',
+    'System Permissions',
+    'Connected Apps',
+  ];
+
+  const objects = ['Account', 'Contact', 'Opportunity', 'Lead', 'Case', 'Campaign', 'Contract', 'Invoice__c'];
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
+    <div style={{ display: 'flex', flexDirection: 'column', width: '100%', minHeight: '100vh', background: '#020617' }}>
       {/* Header */}
-      <header className="border-b border-slate-800 bg-slate-900/50 backdrop-blur-md sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center gap-4">
-          <Link
-            to="/"
-            className="p-2 hover:bg-slate-800 rounded-lg transition text-slate-400 hover:text-white"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </Link>
-          <div>
-            <h1 className="text-2xl font-bold text-white">Permission Matrix X-Ray</h1>
-            <p className="text-sm text-slate-400">Compare permissions across profiles & permission sets</p>
-          </div>
+      <header style={{
+        height: '64px',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '16px',
+        padding: '0 28px',
+        borderBottom: '1px solid rgba(148,163,184,0.1)',
+        background: '#0b1020',
+      }}>
+        <Link
+          to="/dashboard"
+          style={{
+            width: '34px',
+            height: '34px',
+            borderRadius: '8px',
+            background: '#141b30',
+            border: '1px solid #262f47',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+            color: '#aab3c9',
+            textDecoration: 'none',
+          }}
+        >
+          ←
+        </Link>
+        <div style={{
+          width: '30px',
+          height: '30px',
+          borderRadius: '8px',
+          background: 'rgba(34,197,94,0.14)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}>
+          <Grid3x3 size={15} color="#4ade80" />
         </div>
+        <div style={{ color: '#f1f5f9', fontSize: '15px', fontWeight: '700' }}>Permission Matrix X-Ray</div>
+        <div style={{ flex: 1 }}></div>
+        <button
+          onClick={() => setEditMode(!editMode)}
+          style={{
+            padding: '8px 14px',
+            background: editMode ? 'rgba(27,115,232,0.14)' : '#141b30',
+            border: '1px solid #262f47',
+            color: editMode ? '#8fc0ff' : '#d5dbe8',
+            fontSize: '12.5px',
+            fontWeight: '600',
+            borderRadius: '8px',
+            cursor: 'pointer',
+          }}
+        >
+          Edit Mode
+        </button>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        {/* Coming Soon Banner */}
-        <div className="bg-gradient-to-r from-indigo-600/10 to-purple-600/10 border border-indigo-500/20 rounded-xl p-8 mb-12">
-          <div className="flex items-start gap-4">
-            <div className="w-12 h-12 bg-indigo-600/20 rounded-lg flex items-center justify-center flex-shrink-0">
-              <Lock className="w-6 h-6 text-indigo-400" />
-            </div>
-            <div>
-              <h2 className="text-2xl font-bold text-white mb-2">Coming in Phase 3</h2>
-              <p className="text-slate-300 mb-4">
-                Advanced permission analysis with visual comparisons, conflict detection, and trend analysis.
-                This feature is coming soon to help you understand permission patterns across your organization.
-              </p>
-              <div className="text-sm text-slate-400">
-                <strong>Phase Timeline:</strong> Phase 3 will launch Weeks 5-7 with full visualization capabilities.
+      {/* Main */}
+      <main style={{ maxWidth: '7xl', margin: '0 auto', padding: '24px 40px 60px', flex: 1 }}>
+        {/* Selectors */}
+        <div style={{ display: 'flex', gap: '14px', marginBottom: '20px' }}>
+          <div style={{ position: 'relative', width: '260px' }}>
+            <button
+              onClick={() => {
+                setCategoryOpen(!categoryOpen);
+                setObjectOpen(false);
+              }}
+              style={{
+                width: '100%',
+                padding: '11px 14px',
+                background: '#0e1426',
+                border: '1px solid #262f47',
+                color: '#e2e8f0',
+                fontSize: '13.5px',
+                borderRadius: '9px',
+                cursor: 'pointer',
+                textAlign: 'left',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+              }}
+            >
+              {selectedCategory}
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#6b7488" strokeWidth="2.5">
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </button>
+            {categoryOpen && (
+              <div style={{
+                position: 'absolute',
+                top: '48px',
+                left: 0,
+                right: 0,
+                background: '#131a2e',
+                border: '1px solid #262f47',
+                borderRadius: '10px',
+                padding: '6px',
+                boxShadow: '0 12px 32px rgba(0,0,0,0.5)',
+                zIndex: 20,
+                maxHeight: '240px',
+                overflowY: 'auto',
+              }}>
+                {categories.map((cat, i) => (
+                  <button
+                    key={i}
+                    onClick={() => {
+                      setSelectedCategory(cat);
+                      setCategoryOpen(false);
+                    }}
+                    style={{
+                      width: '100%',
+                      padding: '9px 10px',
+                      borderRadius: '7px',
+                      background: cat === selectedCategory ? 'rgba(27,115,232,0.16)' : 'transparent',
+                      color: cat === selectedCategory ? '#fff' : '#d5dbe8',
+                      fontSize: '13px',
+                      cursor: 'pointer',
+                      border: 'none',
+                      textAlign: 'left',
+                      transition: 'background 0.2s',
+                    }}
+                  >
+                    {cat}
+                  </button>
+                ))}
               </div>
-            </div>
+            )}
+          </div>
+
+          <div style={{ position: 'relative', flex: 1, maxWidth: '340px' }}>
+            <button
+              onClick={() => {
+                if (selectedCategory === 'Object Permissions (CRUD)') {
+                  setObjectOpen(!objectOpen);
+                  setCategoryOpen(false);
+                }
+              }}
+              style={{
+                width: '100%',
+                padding: '11px 14px',
+                background: '#0e1426',
+                border: '1px solid #262f47',
+                color: selectedObject ? '#e2e8f0' : '#586178',
+                fontSize: '13.5px',
+                borderRadius: '9px',
+                cursor: selectedCategory === 'Object Permissions (CRUD)' ? 'pointer' : 'not-allowed',
+                textAlign: 'left',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+              }}
+            >
+              {selectedObject ? selectedObject : 'Select an object…'}
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#6b7488" strokeWidth="2.5">
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </button>
+            {objectOpen && (
+              <div style={{
+                position: 'absolute',
+                top: '48px',
+                left: 0,
+                right: 0,
+                background: '#131a2e',
+                border: '1px solid #262f47',
+                borderRadius: '10px',
+                padding: '6px',
+                boxShadow: '0 12px 32px rgba(0,0,0,0.5)',
+                zIndex: 20,
+                maxHeight: '240px',
+                overflowY: 'auto',
+              }}>
+                {objects.map((obj, i) => (
+                  <button
+                    key={i}
+                    onClick={() => {
+                      setSelectedObject(obj);
+                      setObjectOpen(false);
+                    }}
+                    style={{
+                      width: '100%',
+                      padding: '9px 10px',
+                      borderRadius: '7px',
+                      background: 'transparent',
+                      color: '#d5dbe8',
+                      fontSize: '13px',
+                      cursor: 'pointer',
+                      border: 'none',
+                      textAlign: 'left',
+                      transition: 'background 0.2s',
+                    }}
+                  >
+                    {obj}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Feature Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-          {/* Heatmap */}
-          <div className="card card-hover">
-            <div className="w-12 h-12 bg-gradient-to-br from-red-400/20 to-red-600/20 rounded-lg flex items-center justify-center mb-4">
-              <Grid3x3 className="w-6 h-6 text-red-400" />
+        {/* Empty State */}
+        {!selectedObject && (
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '100px 0', textAlign: 'center' }}>
+            <div style={{
+              width: '56px',
+              height: '56px',
+              borderRadius: '14px',
+              background: '#141b30',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginBottom: '18px',
+            }}>
+              <Grid3x3 size={26} color="#586178" />
             </div>
-            <h3 className="text-lg font-bold text-white mb-2">Heatmap Visualization</h3>
-            <p className="text-slate-400 text-sm mb-4">
-              Interactive heatmaps showing permission distribution across objects and profiles at a glance.
-            </p>
-            <div className="flex items-center text-red-400 text-sm font-semibold">
-              Phase 3 <ArrowLeft className="w-4 h-4 ml-1 rotate-180" />
+            <div style={{ color: '#e2e8f0', fontSize: '16px', fontWeight: '700', marginBottom: '6px' }}>
+              Select an Object to Begin
             </div>
-          </div>
-
-          {/* Conflict Detection */}
-          <div className="card card-hover">
-            <div className="w-12 h-12 bg-gradient-to-br from-yellow-400/20 to-yellow-600/20 rounded-lg flex items-center justify-center mb-4">
-              <AlertCircle className="w-6 h-6 text-yellow-400" />
-            </div>
-            <h3 className="text-lg font-bold text-white mb-2">Conflict Detection</h3>
-            <p className="text-slate-400 text-sm mb-4">
-              Automatic detection of risky permission combinations that shouldn't coexist in your org.
-            </p>
-            <div className="flex items-center text-yellow-400 text-sm font-semibold">
-              Phase 3 <ArrowLeft className="w-4 h-4 ml-1 rotate-180" />
+            <div style={{ color: '#8891a6', fontSize: '13.5px' }}>
+              Choose an item above to audit who has access and from where.
             </div>
           </div>
-
-          {/* Trend Analysis */}
-          <div className="card card-hover">
-            <div className="w-12 h-12 bg-gradient-to-br from-green-400/20 to-green-600/20 rounded-lg flex items-center justify-center mb-4">
-              <TrendingUp className="w-6 h-6 text-green-400" />
-            </div>
-            <h3 className="text-lg font-bold text-white mb-2">Trend Analysis</h3>
-            <p className="text-slate-400 text-sm mb-4">
-              Track permission changes over time and identify security drift across your organization.
-            </p>
-            <div className="flex items-center text-green-400 text-sm font-semibold">
-              Phase 3 <ArrowLeft className="w-4 h-4 ml-1 rotate-180" />
-            </div>
-          </div>
-        </div>
-
-        {/* Detailed Feature List */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Left column */}
-          <div>
-            <h3 className="text-xl font-bold text-white mb-6">Capabilities You'll Get</h3>
-            <div className="space-y-4">
-              {[
-                {
-                  title: 'Cross-Profile Comparison',
-                  desc: 'Compare permissions side-by-side across multiple profiles and permission sets'
-                },
-                {
-                  title: 'Object-Level Analysis',
-                  desc: 'Deep dive into object permissions with granular CRUD operations breakdown'
-                },
-                {
-                  title: 'Permission Inheritance Tree',
-                  desc: 'Visualize how permissions flow through your org hierarchy'
-                },
-                {
-                  title: 'Bulk Operations',
-                  desc: 'Convert multiple profiles in batch with conflict pre-detection'
-                },
-              ].map((item, idx) => (
-                <div key={idx} className="card card-hover p-4">
-                  <h4 className="font-semibold text-white mb-1">{item.title}</h4>
-                  <p className="text-sm text-slate-400">{item.desc}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Right column */}
-          <div>
-            <h3 className="text-xl font-bold text-white mb-6">Integration Roadmap</h3>
-            <div className="space-y-4">
-              {[
-                {
-                  phase: 'Phase 3',
-                  items: ['Heatmap visualizations', 'Conflict detection', 'Export to PDF/CSV', 'Trend analysis']
-                },
-                {
-                  phase: 'Phase 4+',
-                  items: ['Slack integration', 'Email alerts', 'Multi-org support', 'Real-time monitoring']
-                },
-              ].map((section, idx) => (
-                <div key={idx} className="card">
-                  <h4 className="font-bold text-white mb-3 text-lg">{section.phase}</h4>
-                  <ul className="space-y-2">
-                    {section.items.map((item, itemIdx) => (
-                      <li key={itemIdx} className="flex items-center gap-2 text-slate-300 text-sm">
-                        <Zap className="w-4 h-4 text-slate-500" />
-                        {item}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* CTA */}
-        <div className="mt-12 bg-gradient-to-r from-indigo-600/20 to-purple-600/20 border border-indigo-500/30 rounded-xl p-8 text-center">
-          <h3 className="text-2xl font-bold text-white mb-2">Stay Tuned</h3>
-          <p className="text-slate-300 mb-6">
-            Permission Matrix X-Ray launches in Phase 3. In the meantime, use Profile Converter and Permission Set Summarizer.
-          </p>
-          <Link to="/" className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold rounded-lg transition">
-            Back to Dashboard
-            <ArrowLeft className="w-4 h-4 rotate-180" />
-          </Link>
-        </div>
+        )}
       </main>
     </div>
   );
