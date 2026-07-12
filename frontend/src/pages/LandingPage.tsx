@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
-import { ArrowRight, Zap, BarChart3, Grid3x3, Check } from 'lucide-react';
+import { ArrowRight, Zap, BarChart3, Grid3x3, Check, Menu, X } from 'lucide-react';
+import { useState } from 'react';
 
 export function LandingPage() {
   return (
@@ -12,7 +13,7 @@ export function LandingPage() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        padding: '18px 56px',
+        padding: 'clamp(12px, 4vw, 18px) clamp(20px, 5vw, 56px)',
         background: 'rgba(2,6,23,0.85)',
         backdropFilter: 'blur(10px)',
         borderBottom: '1px solid rgba(148,163,184,0.08)',
@@ -447,6 +448,93 @@ export function LandingPage() {
           <div style={{ cursor: 'pointer' }}>Status</div>
         </div>
       </div>
+
+      <style>{`
+        @media (max-width: 1024px) {
+          div[style*="padding: '96px"] {
+            padding: 60px 40px !important;
+          }
+
+          div[style*="gridTemplateColumns: 'repeat(3"] {
+            grid-template-columns: repeat(2, 1fr) !important;
+          }
+
+          div[style*="display: 'flex'"][style*="flexDirection: 'row"] {
+            flex-wrap: wrap !important;
+          }
+        }
+
+        @media (max-width: 768px) {
+          div[style*="padding: '18px"] {
+            padding: 12px 16px !important;
+          }
+
+          div[style*="padding: '56px"] {
+            padding: 32px 20px !important;
+          }
+
+          div[style*="padding: '90px"] {
+            padding: 50px 20px !important;
+          }
+
+          div[style*="padding: '36px"] {
+            padding: 24px 20px !important;
+          }
+
+          div[style*="fontSize: '56px"] {
+            font-size: 36px !important;
+            line-height: 1.2 !important;
+          }
+
+          div[style*="fontSize: '34px"] {
+            font-size: 26px !important;
+          }
+
+          div[style*="fontSize: '18px"] {
+            font-size: 16px !important;
+          }
+
+          div[style*="gap: '36px"] {
+            gap: 20px !important;
+          }
+
+          div[style*="display: 'flex'"][style*="justifyContent: 'space-between"] {
+            flex-direction: column !important;
+            gap: 16px !important;
+          }
+
+          div[style*="gridTemplateColumns: 'repeat(3"] {
+            grid-template-columns: 1fr !important;
+          }
+        }
+
+        @media (max-width: 480px) {
+          div[style*="padding: '18px"] {
+            padding: 10px 12px !important;
+          }
+
+          div[style*="gap: '16px"] {
+            gap: 8px !important;
+          }
+
+          a[style*="padding: '14px"] {
+            padding: 12px 16px !important;
+            font-size: 13px !important;
+          }
+
+          button {
+            min-height: 44px !important;
+          }
+
+          div[style*="fontSize: '15px"] {
+            font-size: 13px !important;
+          }
+
+          div[style*="fontSize: '13.5px"] {
+            font-size: 12px !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }

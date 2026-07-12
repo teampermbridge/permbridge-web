@@ -53,7 +53,7 @@ export function LoginPage() {
 
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', width: '100%', height: '100vh', background: '#020617' }}>
+    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', width: '100%', minHeight: '100vh', background: '#020617' }}>
       {/* Left Panel */}
       <div style={{
         background: 'linear-gradient(160deg,#1B1F3B 0%,#0d1026 55%,#020617 100%)',
@@ -303,6 +303,52 @@ export function LoginPage() {
       <style>{`
         @keyframes spin {
           to { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+          div[style*="grid"] {
+            grid-template-columns: 1fr !important;
+          }
+
+          div[style*="padding: '56px"] {
+            padding: 32px 20px !important;
+          }
+
+          div[style*="fontSize: '42px"] {
+            font-size: 28px !important;
+            line-height: 1.2 !important;
+          }
+
+          div[style*="fontSize: '19px"] {
+            font-size: 18px !important;
+          }
+
+          div[style*="gap: '36px"] {
+            gap: 24px !important;
+          }
+
+          div[style*="gap: '16px"] {
+            gap: 12px !important;
+          }
+        }
+
+        @media (max-width: 480px) {
+          div[style*="padding: '40px"] {
+            padding: 20px !important;
+          }
+
+          div[style*="fontSize: '26px"] {
+            font-size: 20px !important;
+          }
+
+          div[style*="fontSize: '14.5px"] {
+            font-size: 13px !important;
+          }
+
+          button[style*="padding: '13px"] {
+            padding: 11px 14px !important;
+            font-size: 13px !important;
+          }
         }
       `}</style>
     </div>

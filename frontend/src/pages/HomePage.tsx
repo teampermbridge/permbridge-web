@@ -376,6 +376,58 @@ export function HomePage() {
           </div>
         </div>
       </main>
+
+      <style>{`
+        @media (max-width: 1024px) {
+          div[style*="gridTemplateColumns: 'repeat(3"] {
+            grid-template-columns: repeat(2, 1fr) !important;
+          }
+        }
+
+        @media (max-width: 768px) {
+          div[style*="padding: '0 28px"] {
+            padding: 0 16px !important;
+          }
+
+          div[style*="padding: '40px 48px"] {
+            padding: 24px 16px !important;
+          }
+
+          div[style*="gap: '28px"] {
+            gap: 16px !important;
+          }
+
+          div[style*="gridTemplateColumns: 'repeat(3"] {
+            grid-template-columns: 1fr !important;
+          }
+
+          div[style*="fontSize: '15.5px"] {
+            font-size: 14px !important;
+          }
+
+          div[style*="display: 'flex'"] {
+            flex-wrap: wrap !important;
+          }
+        }
+
+        @media (max-width: 480px) {
+          div[style*="fontSize: '20px"] {
+            font-size: 16px !important;
+          }
+
+          div[style*="fontSize: '16.5px"] {
+            font-size: 15px !important;
+          }
+
+          div[style*="fontSize: '13.5px"] {
+            font-size: 12px !important;
+          }
+
+          button {
+            min-height: 44px !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }

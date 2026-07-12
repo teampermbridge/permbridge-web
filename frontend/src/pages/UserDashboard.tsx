@@ -476,6 +476,57 @@ export function UserDashboard() {
         ::-webkit-scrollbar-thumb:hover {
           background: #3a4562;
         }
+
+        @media (max-width: 768px) {
+          div[style*="width: '280px"] {
+            width: 100% !important;
+            border-right: none !important;
+            border-bottom: 1px solid rgba(148,163,184,0.1) !important;
+            padding: 16px !important;
+            margin-bottom: 16px !important;
+          }
+
+          div[style*="display: 'flex'"][style*="flexDirection: 'column"] {
+            flex-direction: row !important;
+            gap: 8px !important;
+            overflow-x: auto !important;
+          }
+
+          div[style*="padding: '40px"] {
+            padding: 20px !important;
+          }
+
+          div[style*="display: 'grid'"][style*="gridTemplateColumns: 'repeat(3"] {
+            grid-template-columns: repeat(2, 1fr) !important;
+          }
+
+          div[style*="maxWidth: '600px"] {
+            max-width: 100% !important;
+          }
+        }
+
+        @media (max-width: 480px) {
+          div[style*="display: 'flex'"][style*="flexDirection: 'column"] {
+            flex-direction: column !important;
+          }
+
+          button {
+            min-height: 44px !important;
+            min-width: 44px !important;
+          }
+
+          div[style*="display: 'grid'"][style*="gridTemplateColumns: 'repeat(3"] {
+            grid-template-columns: 1fr !important;
+          }
+
+          div[style*="fontSize: '18px"] {
+            font-size: 16px !important;
+          }
+
+          div[style*="fontSize: '15px"] {
+            font-size: 13px !important;
+          }
+        }
       `}</style>
     </div>
   );

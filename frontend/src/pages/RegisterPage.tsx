@@ -382,6 +382,48 @@ export function RegisterPage() {
         @keyframes spin {
           to { transform: rotate(360deg); }
         }
+
+        @media (max-width: 768px) {
+          div[style*="grid"] {
+            grid-template-columns: 1fr !important;
+          }
+
+          div[style*="padding: '56px"] {
+            padding: 32px 20px !important;
+          }
+
+          div[style*="fontSize: '42px"] {
+            font-size: 28px !important;
+            line-height: 1.2 !important;
+          }
+
+          div[style*="fontSize: '26px"] {
+            font-size: 22px !important;
+          }
+
+          div[style*="gap: '36px"] {
+            gap: 24px !important;
+          }
+        }
+
+        @media (max-width: 480px) {
+          div[style*="padding: '40px"] {
+            padding: 20px !important;
+          }
+
+          div[style*="padding: '56px"] {
+            padding: 24px 16px !important;
+          }
+
+          div[style*="fontSize: '20px"] {
+            font-size: 18px !important;
+          }
+
+          button[type="submit"] {
+            padding: 11px 14px !important;
+            font-size: 13px !important;
+          }
+        }
       `}</style>
     </div>
   );
