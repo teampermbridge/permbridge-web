@@ -4,6 +4,14 @@ import { useAuthStore } from '../store/authStore';
 import { Check } from 'lucide-react';
 import client from '../api/client';
 
+const LOGO = (
+  <svg width="40" height="40" viewBox="0 0 96 96" fill="none">
+    <rect width="96" height="96" rx="22" fill="rgba(255,255,255,0.08)"></rect>
+    <path d="M33 27 L33 69 M33 48 L58 27 M33 48 L60 69" stroke="#FFFFFF" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" fill="none"></path>
+    <circle cx="67" cy="25" r="8" fill="#4f9cf9"></circle>
+  </svg>
+);
+
 export function LoginPage() {
   const navigate = useNavigate();
   const setToken = useAuthStore((state) => state.setToken);
@@ -78,16 +86,12 @@ export function LoginPage() {
 
         <div style={{ position: 'relative' }}>
           {/* Logo */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '22px' }}>
-            <svg width="40" height="40" viewBox="0 0 96 96" fill="none">
-              <rect width="96" height="96" rx="22" fill="rgba(255,255,255,0.08)"></rect>
-              <path d="M33 27 L33 69 M33 48 L58 27 M33 48 L60 69" stroke="#FFFFFF" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" fill="none"></path>
-              <circle cx="67" cy="25" r="8" fill="#4f9cf9"></circle>
-            </svg>
+          <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '22px', textDecoration: 'none', cursor: 'pointer' }}>
+            {LOGO}
             <div style={{ color: '#f1f5f9', fontSize: '19px', fontWeight: '700', letterSpacing: '-0.2px' }}>
-              Kairos <span style={{ color: '#7a8299', fontWeight: '500' }}>/ Perm Bridge</span>
+              Kairos <span style={{ color: '#7a8299', fontWeight: '500' }}>/ PermBridge</span>
             </div>
-          </div>
+          </Link>
 
           {/* Badge */}
           <div style={{
