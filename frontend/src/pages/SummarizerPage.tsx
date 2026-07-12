@@ -116,22 +116,60 @@ export function SummarizerPage() {
             </div>
           </div>
 
-          <div style={{ flex: 1, minWidth: '220px' }}>
+          <div style={{ flex: 1, minWidth: '220px', position: 'relative' }}>
             <div style={{ color: '#8891a6', fontSize: '12px', fontWeight: '700', letterSpacing: '0.4px', textTransform: 'uppercase', marginBottom: '8px' }}>
               Select
             </div>
-            <button style={{
-              width: '100%',
-              padding: '11px 14px',
-              background: '#0e1426',
-              border: '1px solid #262f47',
-              color: selectedTarget ? '#e2e8f0' : '#586178',
-              fontSize: '13.5px',
-              borderRadius: '9px',
-              cursor: 'pointer',
-            }}>
-              {selectedTarget ? 'Selected' : 'Select —'}
+            <button
+              disabled={loading}
+              style={{
+                width: '100%',
+                padding: '11px 14px',
+                background: '#0e1426',
+                border: '1px solid #262f47',
+                color: selectedTarget ? '#e2e8f0' : '#586178',
+                fontSize: '13.5px',
+                borderRadius: '9px',
+                cursor: loading ? 'not-allowed' : 'pointer',
+                opacity: loading ? 0.6 : 1,
+              }}>
+              {loading ? 'Loading...' : (selectedTarget ? selectedTarget : `Select ${type} —`)}
             </button>
+            {!loading && (type === 'profile' ? profiles : permsets).length > 0 && (
+              <div style={{
+                position: 'absolute',
+                top: '74px',
+                left: 0,
+                right: 0,
+                background: '#131a2e',
+                border: '1px solid #262f47',
+                borderRadius: '10px',
+                padding: '6px',
+                boxShadow: '0 12px 32px rgba(0,0,0,0.5)',
+                zIndex: 20,
+                maxHeight: '240px',
+                overflowY: 'auto',
+              }}>
+                {(type === 'profile' ? profiles : permsets).map((item, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setSelectedTarget(item.name)}
+                    style={{
+                      width: '100%',
+                      padding: '9px 10px',
+                      borderRadius: '7px',
+                      color: '#d5dbe8',
+                      fontSize: '13px',
+                      cursor: 'pointer',
+                      border: 'none',
+                      background: 'transparent',
+                      textAlign: 'left',
+                    }}>
+                    {item.name}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           <button

@@ -1,13 +1,41 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { useAuthStore } from '../store/authStore';
 import { Grid3x3 } from 'lucide-react';
+import client from '../api/client';
 
 export function MatrixPage() {
+  const organization = useAuthStore((state) => state.organization);
   const [editMode, setEditMode] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('Object Permissions (CRUD)');
   const [selectedObject, setSelectedObject] = useState<string | null>(null);
   const [categoryOpen, setCategoryOpen] = useState(false);
   const [objectOpen, setObjectOpen] = useState(false);
+  const [profiles, setProfiles] = useState<any[]>([]);
+  const [permsets, setPermsets] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (organization?.id) {
+      fetchData();
+    }
+  }, [organization?.id]);
+
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const [profileRes, permsetRes] = await Promise.all([
+        client.get(`/api/salesforce/org/${organization?.id}/profiles`),
+        client.get(`/api/salesforce/org/${organization?.id}/permsets`),
+      ]);
+      setProfiles(profileRes.data.profiles);
+      setPermsets(permsetRes.data.permissionSets);
+    } catch (error) {
+      console.error('Failed to fetch data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const categories = [
     'Object Permissions (CRUD)',
