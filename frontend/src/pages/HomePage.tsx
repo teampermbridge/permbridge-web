@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { useAuthStore } from '../store/authStore';
-import { Link } from 'react-router-dom';
-import { LogOut, Bell, ChevronDown, Zap, BarChart3, Grid3x3, ArrowRight, TrendingUp } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { LogOut, Bell, ChevronDown, Settings, Zap, BarChart3, Grid3x3, ArrowRight, TrendingUp } from 'lucide-react';
 import client from '../api/client';
 
 export function HomePage() {
+  const navigate = useNavigate();
   const { user, logout } = useAuth();
   const organization = useAuthStore((state) => state.organization);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
@@ -46,14 +47,25 @@ export function HomePage() {
       }}>
         {/* Left */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '28px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <button
+            onClick={() => navigate('/dashboard')}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+              background: 'transparent',
+              border: 'none',
+              cursor: 'pointer',
+              padding: 0,
+            }}
+          >
             <svg width="30" height="30" viewBox="0 0 96 96" fill="none">
               <rect width="96" height="96" rx="22" fill="#1B1F3B"></rect>
               <path d="M33 27 L33 69 M33 48 L58 27 M33 48 L60 69" stroke="#FFFFFF" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" fill="none"></path>
               <circle cx="67" cy="25" r="8" fill="#1B73E8"></circle>
             </svg>
-            <div style={{ color: '#f1f5f9', fontSize: '15.5px', fontWeight: '700' }}>Perm Bridge</div>
-          </div>
+            <div style={{ color: '#f1f5f9', fontSize: '15.5px', fontWeight: '700' }}>PermBridge</div>
+          </button>
           <div style={{ position: 'relative' }}>
             <div
               onClick={() => setOrgMenuOpen(!orgMenuOpen)}
@@ -91,20 +103,46 @@ export function HomePage() {
                 zIndex: 20,
               }}>
                 {['Acme Robotics — Production', 'Acme Robotics — Sandbox'].map((org, i) => (
-                  <div key={i} style={{
+                  <button
+                    key={i}
+                    onClick={() => setOrgMenuOpen(false)}
+                    style={{
+                      width: '100%',
+                      padding: '9px 10px',
+                      borderRadius: '7px',
+                      color: i === 0 ? '#e2e8f0' : '#aab3c9',
+                      fontSize: '13px',
+                      background: i === 0 ? 'rgba(27,115,232,0.12)' : 'transparent',
+                      cursor: 'pointer',
+                      border: 'none',
+                      textAlign: 'left',
+                      transition: 'background 0.2s',
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(27,115,232,0.08)'}
+                    onMouseLeave={(e) => e.currentTarget.style.background = i === 0 ? 'rgba(27,115,232,0.12)' : 'transparent'}
+                  >
+                    {org}
+                  </button>
+                ))}
+                <button
+                  onClick={() => { setOrgMenuOpen(false); navigate('/connect'); }}
+                  style={{
+                    width: '100%',
                     padding: '9px 10px',
                     borderRadius: '7px',
-                    color: i === 0 ? '#e2e8f0' : '#aab3c9',
+                    color: '#aab3c9',
                     fontSize: '13px',
-                    background: i === 0 ? 'rgba(27,115,232,0.12)' : 'transparent',
                     cursor: 'pointer',
-                  }}>
-                    {org}
-                  </div>
-                ))}
-                <div style={{ padding: '9px 10px', borderRadius: '7px', color: '#aab3c9', fontSize: '13px', cursor: 'pointer' }}>
+                    border: 'none',
+                    background: 'transparent',
+                    textAlign: 'left',
+                    transition: 'background 0.2s',
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(27,115,232,0.08)'}
+                  onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                >
                   + Connect new org
-                </div>
+                </button>
               </div>
             )}
           </div>
@@ -145,18 +183,52 @@ export function HomePage() {
                 boxShadow: '0 12px 32px rgba(0,0,0,0.5)',
                 zIndex: 20,
               }}>
-                <div style={{ padding: '9px 10px', borderRadius: '7px', color: '#aab3c9', fontSize: '13px' }}>
+                <div style={{ padding: '10px', borderRadius: '7px', color: '#8891a6', fontSize: '12px', borderBottom: '1px solid rgba(148,163,184,0.1)', marginBottom: '4px' }}>
                   {user?.email}
                 </div>
-                <div style={{ padding: '9px 10px', borderRadius: '7px', color: '#aab3c9', fontSize: '13px', cursor: 'pointer' }}>
+                <button
+                  onClick={() => { navigate('/user-dashboard'); setUserMenuOpen(false); }}
+                  style={{
+                    width: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    padding: '9px 10px',
+                    borderRadius: '7px',
+                    color: '#aab3c9',
+                    fontSize: '13px',
+                    cursor: 'pointer',
+                    border: 'none',
+                    background: 'transparent',
+                    textAlign: 'left',
+                    transition: 'background 0.2s',
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(27,115,232,0.08)'}
+                  onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                >
+                  <Settings size={14} />
                   Settings
-                </div>
-                <div
+                </button>
+                <button
                   onClick={() => { logout(); setUserMenuOpen(false); }}
-                  style={{ padding: '9px 10px', borderRadius: '7px', color: '#f87171', fontSize: '13px', fontWeight: '600', cursor: 'pointer' }}
+                  style={{
+                    width: '100%',
+                    padding: '9px 10px',
+                    borderRadius: '7px',
+                    color: '#f87171',
+                    fontSize: '13px',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    border: 'none',
+                    background: 'transparent',
+                    textAlign: 'left',
+                    transition: 'background 0.2s',
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(248,113,113,0.1)'}
+                  onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
                 >
                   Log out
-                </div>
+                </button>
               </div>
             )}
           </div>

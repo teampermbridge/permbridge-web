@@ -49,19 +49,33 @@ export function SummarizerPage() {
       }}>
         <div style={{ maxWidth: '7xl', margin: '0 auto', padding: '24px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <Link
-              to="/dashboard"
+            <button
+              onClick={() => window.history.back()}
               style={{
-                padding: '8px',
-                background: 'rgba(0,0,0,0.2)',
+                padding: '8px 12px',
+                background: '#141b30',
+                border: '1px solid #262f47',
                 borderRadius: '8px',
                 cursor: 'pointer',
                 color: '#aab3c9',
                 textDecoration: 'none',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'all 0.2s',
               }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = '#1a2138';
+                e.currentTarget.style.borderColor = '#3a4562';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = '#141b30';
+                e.currentTarget.style.borderColor = '#262f47';
+              }}
+              title="Back to Dashboard"
             >
               ←
-            </Link>
+            </button>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
               <div style={{
                 width: '30px',

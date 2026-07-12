@@ -87,7 +87,17 @@ export function ConverterPage() {
             justifyContent: 'center',
             cursor: 'pointer',
             color: '#aab3c9',
+            transition: 'all 0.2s',
           }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = '#1a2138';
+            e.currentTarget.style.borderColor = '#3a4562';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = '#141b30';
+            e.currentTarget.style.borderColor = '#262f47';
+          }}
+          title="Back to Dashboard"
         >
           ←
         </button>

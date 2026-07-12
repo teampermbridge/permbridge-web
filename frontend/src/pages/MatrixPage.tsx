@@ -63,8 +63,8 @@ export function MatrixPage() {
         borderBottom: '1px solid rgba(148,163,184,0.1)',
         background: '#0b1020',
       }}>
-        <Link
-          to="/dashboard"
+        <button
+          onClick={() => window.history.back()}
           style={{
             width: '34px',
             height: '34px',
@@ -77,10 +77,20 @@ export function MatrixPage() {
             cursor: 'pointer',
             color: '#aab3c9',
             textDecoration: 'none',
+            transition: 'all 0.2s',
           }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = '#1a2138';
+            e.currentTarget.style.borderColor = '#3a4562';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = '#141b30';
+            e.currentTarget.style.borderColor = '#262f47';
+          }}
+          title="Back to Dashboard"
         >
           ←
-        </Link>
+        </button>
         <div style={{
           width: '30px',
           height: '30px',
