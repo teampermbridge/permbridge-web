@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
-import { ArrowRight, Check } from 'lucide-react';
+import { Check } from 'lucide-react';
 import client from '../api/client';
 
 export function LoginPage() {
@@ -45,9 +45,6 @@ export function LoginPage() {
     }
   };
 
-  const handleGoogleLogin = () => {
-    window.location.href = '/api/auth/google-login';
-  };
 
   return (
     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', width: '100%', height: '100vh', background: '#020617' }}>
@@ -188,45 +185,6 @@ export function LoginPage() {
             margin: '0 0 32px 0',
           }}>Sign in to your Kairos workspace</p>
 
-          {/* Google Button */}
-          <button
-            onClick={handleGoogleLogin}
-            disabled={isSubmitting}
-            style={{
-              width: '100%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '10px',
-              background: '#141b30',
-              border: '1px solid #262f47',
-              color: '#e2e8f0',
-              fontSize: '14.5px',
-              fontWeight: '600',
-              padding: '12px 16px',
-              borderRadius: '10px',
-              cursor: 'pointer',
-              marginBottom: '20px',
-              transition: 'background 0.15s',
-            }}
-            onMouseEnter={(e) => e.currentTarget.style.background = '#1a2338'}
-            onMouseLeave={(e) => e.currentTarget.style.background = '#141b30'}
-          >
-            <svg width="17" height="17" viewBox="0 0 24 24">
-              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.07 5.07 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"></path>
-              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.99.66-2.25 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.85A11 11 0 0012 23z"></path>
-              <path fill="#FBBC05" d="M5.84 14.1a6.6 6.6 0 010-4.2V7.05H2.18a11 11 0 000 9.9l3.66-2.85z"></path>
-              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1A11 11 0 002.18 7.05l3.66 2.85C6.71 7.3 9.14 5.38 12 5.38z"></path>
-            </svg>
-            Continue with Google SSO
-          </button>
-
-          {/* Divider */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '14px', margin: '20px 0' }}>
-            <div style={{ flex: 1, height: '1px', background: '#1f2740' }}></div>
-            <div style={{ color: '#586178', fontSize: '12px', fontWeight: '500' }}>OR</div>
-            <div style={{ flex: 1, height: '1px', background: '#1f2740' }}></div>
-          </div>
 
           {/* Form */}
           <form onSubmit={handleEmailLogin} style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '22px' }}>
@@ -335,7 +293,7 @@ export function LoginPage() {
           </form>
 
           <p style={{ textAlign: 'center', color: '#6b7488', fontSize: '13px', margin: '0' }}>
-            Don't have a workspace? <span style={{ color: '#5b8fe0', fontWeight: '600', cursor: 'pointer' }}>Talk to sales</span>
+            Don't have an account? <Link to="/register" style={{ color: '#5b8fe0', fontWeight: '600', textDecoration: 'none' }}>Sign up</Link>
           </p>
         </div>
       </div>
