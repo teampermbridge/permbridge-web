@@ -33,10 +33,8 @@ export function LoginPage() {
 
       if (organizations.length > 0) {
         setOrganization(organizations[0]);
-        navigate('/connect');
-      } else {
-        navigate('/onboarding');
       }
+      navigate('/user-dashboard');
     } catch (error: any) {
       console.error('Login error:', error);
       setError(error.response?.data?.error || 'Login failed');

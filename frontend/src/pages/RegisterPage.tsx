@@ -40,7 +40,7 @@ export function RegisterPage() {
       setOrganization(organization);
       setOrganizations([organization]);
 
-      navigate('/connect');
+      navigate('/user-dashboard');
     } catch (error: any) {
       console.error('Registration error:', error);
       setError(error.response?.data?.error || 'Registration failed');
