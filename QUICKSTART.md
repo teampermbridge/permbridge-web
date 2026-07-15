@@ -23,12 +23,14 @@ node -e "import('pg').then(pg => { /* run migration */ })"
 **Critical:** Use `migrations/002_add_saas_tables.sql` (NOT 001_init_schema.sql)
 
 ## 3. Salesforce OAuth Setup (10 min)
-1. Go to Salesforce Setup > Apps > App Manager
-2. Create New Connected App named "PermBridge"
-3. Enable OAuth Settings
-4. Set Callback URL to: `http://localhost:3001/api/auth/salesforce/callback`
-5. Add Scopes: `full`, `refresh_token`, `api`
-6. Copy Consumer Key and Consumer Secret
+⚠️ **Note:** Use External Client App (Connected Apps deprecated as of Spring '26)
+1. Go to Salesforce Setup > App Manager
+2. Click "New External Client App"
+3. Name: "PermBridge", Enable OAuth
+4. Select: Web Server Flow, require secrets
+5. Add Scopes: `api`, `refresh_token`, `web`, `openid`
+6. Set Callback URL: `http://localhost:3001/api/auth/salesforce/callback`
+7. Manage Consumer Details → Copy Consumer Key and Secret
 
 ## 4. Backend (.env) (2 min)
 ```bash

@@ -124,47 +124,84 @@ curl http://localhost:3001/health
 # Should return: {"status":"ok","timestamp":"..."}
 ```
 
-## 3. Salesforce OAuth Configuration
+## 3. Salesforce OAuth Configuration (External Client App)
 
-### 3.1 Create a Connected App
+⚠️ **Important Update (Spring 2026):** Salesforce deprecated Connected Apps for new integrations. Use **External Client Apps (ECAs)** instead. Our OAuth code works with both—no implementation changes needed!
+
+### 3.1 Create an External Client App
 
 1. Log in to your **Salesforce Developer Org** (or sandbox)
-2. Navigate to **Setup > Apps > App Manager**
-3. Click **New Connected App**
-4. Fill in:
-   - **Connected App Name:** PermBridge
-   - **API Name:** permbridge (auto-generated)
+2. Navigate to **Setup > App Manager** (search "App Manager" in Quick Find)
+3. Click **New External Client App**
+4. Fill in **Basic Information**:
+   - **Name:** PermBridge
+   - **API Name:** PermBridge (auto-generated)
    - **Contact Email:** your-email@example.com
+   - **Distribution State:** Local
+5. Click **Save**
 
 ### 3.2 Enable OAuth Settings
 
-1. Check **Enable OAuth Settings**
-2. Set **Callback URL** to: `http://localhost:3001/api/auth/salesforce/callback`
-3. Under **Selected OAuth Scopes**, add:
-   - `full` (Full access)
-   - `refresh_token` (Refresh token)
-   - `api` (Access your basic information)
+1. Go back to the app in App Manager
+2. Click the **dropdown menu** → **View**
+3. Scroll to **OAuth Settings** section
+4. Click **Edit** and configure:
+   - ✓ Check **Enable OAuth**
+   - ✓ Select **Web Server Flow** under OAuth Flows
+   - ✓ Check **Require Secret for Web Server Flow**
+   - ✓ Check **Require Secret for Refresh Token Flow**
+
+### 3.3 Configure OAuth Scopes
+
+1. In OAuth Settings, select **OAuth Scopes** to enable:
+   - ✓ `api` - REST/Bulk API access
+   - ✓ `refresh_token` - Refresh token flow
+   - ✓ `web` - Web access
+   - ✓ `openid` - User identity (OpenID Connect)
+
+2. Click **Save**
+
+### 3.4 Set Redirect URI
+
+1. In OAuth Settings, scroll to **Callback URL**
+2. Enter: `http://localhost:3001/api/auth/salesforce/callback`
+3. For production, add additional URLs (one per line):
+   ```
+   http://localhost:3001/api/auth/salesforce/callback
+   https://yourdomain.com/api/auth/salesforce/callback
+   ```
 4. Click **Save**
 
-### 3.3 Get Credentials
+**Important:** The redirect URI is case-sensitive and must match exactly.
 
-1. Go to the app's **Manage** page
-2. Click **View** next to Consumer Secret
-3. Copy **Consumer Key** and **Consumer Secret**
-4. Add to backend `.env`:
+### 3.5 Get Credentials
+
+1. From **App Manager**, locate your PermBridge app
+2. Click the **dropdown menu** → **View**
+3. Scroll to **Consumer Key and Secret** section
+4. Click **Manage Consumer Details**
+5. Verify your identity (email/phone confirmation—you have 5 minutes)
+6. Copy and save:
+   - **Consumer Key** = `SALESFORCE_CLIENT_ID`
+   - **Consumer Secret** = `SALESFORCE_CLIENT_SECRET`
+7. Add to backend `.env`:
    ```env
    SALESFORCE_CLIENT_ID=your-consumer-key
    SALESFORCE_CLIENT_SECRET=your-consumer-secret
    ```
 
-### 3.4 Verify Redirect URI
+**Security Note:** Credentials will rotate if you click "Rotate" in the future, invalidating existing tokens. Changes take ~10 minutes to propagate.
 
-The redirect URI configured in Salesforce **MUST EXACTLY match**:
-```
-http://localhost:3001/api/auth/salesforce/callback
-```
+### 3.6 Verify Configuration
 
-If it doesn't match, you'll get: `error=redirect_uri_mismatch`
+Double-check in Salesforce:
+- ✓ OAuth enabled
+- ✓ Web Server Flow selected
+- ✓ Secrets required for both Web and Refresh flows
+- ✓ Redirect URI set to: `http://localhost:3001/api/auth/salesforce/callback`
+- ✓ Scopes: api, refresh_token, web, openid
+
+**If you see `error=redirect_uri_mismatch`:** The callback URL doesn't match exactly. Check for typos, trailing slashes, or protocol differences.
 
 ## 4. Frontend Setup
 
