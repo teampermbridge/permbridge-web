@@ -48,14 +48,22 @@ export async function syncSalesforceOrg(
     await syncPermissionSets(conn, connectionId, organizationId);
     await updateSyncJobProgress(jobId, 50);
 
-    // Sync object permissions for profiles
-    console.log(`[Sync ${jobId}] Fetching object permissions...`);
-    await syncObjectPermissions(conn, connectionId, organizationId);
+    // Sync object permissions for profiles (optional - may not be available in all editions)
+    try {
+      console.log(`[Sync ${jobId}] Fetching object permissions...`);
+      await syncObjectPermissions(conn, connectionId, organizationId);
+    } catch (error) {
+      console.warn(`[Sync ${jobId}] ⚠ Object permissions not available (this is optional):`, (error as Error).message);
+    }
     await updateSyncJobProgress(jobId, 75);
 
-    // Sync field permissions
-    console.log(`[Sync ${jobId}] Fetching field permissions...`);
-    await syncFieldPermissions(conn, connectionId, organizationId);
+    // Sync field permissions (optional - may not be available in all editions)
+    try {
+      console.log(`[Sync ${jobId}] Fetching field permissions...`);
+      await syncFieldPermissions(conn, connectionId, organizationId);
+    } catch (error) {
+      console.warn(`[Sync ${jobId}] ⚠ Field permissions not available (this is optional):`, (error as Error).message);
+    }
     await updateSyncJobProgress(jobId, 90);
 
     // Sync salesforce users
