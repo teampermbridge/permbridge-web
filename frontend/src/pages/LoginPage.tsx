@@ -1,8 +1,16 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
-import { ArrowRight, Check } from 'lucide-react';
+import { Check } from 'lucide-react';
 import client from '../api/client';
+
+const LOGO = (
+  <svg width="40" height="40" viewBox="0 0 96 96" fill="none">
+    <rect width="96" height="96" rx="22" fill="rgba(255,255,255,0.08)"></rect>
+    <path d="M33 27 L33 69 M33 48 L58 27 M33 48 L60 69" stroke="#FFFFFF" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" fill="none"></path>
+    <circle cx="67" cy="25" r="8" fill="#4f9cf9"></circle>
+  </svg>
+);
 
 export function LoginPage() {
   const navigate = useNavigate();
@@ -16,41 +24,90 @@ export function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [localError, setLocalError] = useState<string | null>(null);
 
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    setError(null);
+    setLocalError(null);
+
+    console.log('🔐 LOGIN: Starting login attempt', { email });
+
+    if (!email || !password) {
+      console.warn('🔐 LOGIN: Missing email or password');
+      setLocalError('Email and password are required');
+      setIsSubmitting(false);
+      return;
+    }
 
     try {
-      const response = await client.post('/auth/login', { email, password });
+      console.log('🔐 LOGIN: Sending POST to /api/auth/login');
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+      const response = await client.post('/api/auth/login', { email, password }, { signal: controller.signal as any });
+      clearTimeout(timeoutId);
+
+      console.log('🔐 LOGIN: Got response from backend', {
+        hasToken: !!response.data.token,
+        hasUser: !!response.data.user,
+        organizationCount: response.data.organizations?.length
+      });
+
       const { token, user, organizations } = response.data;
 
+      if (!token) {
+        console.error('🔐 LOGIN: No token in response!');
+        throw new Error('No token received from server');
+      }
+
+      console.log('🔐 LOGIN: Setting localStorage auth_token');
       localStorage.setItem('auth_token', token);
+      console.log('🔐 LOGIN: Token stored, updating auth store');
+
       setToken(token);
       setUser(user);
       setOrganizations(organizations);
 
       if (organizations.length > 0) {
+        console.log('🔐 LOGIN: Setting primary organization', { orgId: organizations[0].id });
         setOrganization(organizations[0]);
-        navigate('/connect');
-      } else {
-        navigate('/onboarding');
       }
+
+      console.log('🔐 LOGIN: About to navigate to /user-dashboard');
+      navigate('/user-dashboard');
+      console.log('🔐 LOGIN: Navigation completed');
     } catch (error: any) {
-      console.error('Login error:', error);
-      setError(error.response?.data?.error || 'Login failed');
+      console.error('🔐 LOGIN: ERROR', error);
+      console.error('🔐 LOGIN: Error details', {
+        status: error.response?.status,
+        data: error.response?.data,
+        message: error.message,
+        name: error.name
+      });
+
+      let errorMsg = 'Login failed. Please try again.';
+      if (error.name === 'AbortError') {
+        errorMsg = 'Request timed out. Check your connection and try again.';
+      } else if (error.response?.status === 401) {
+        errorMsg = 'Invalid email or password. Check your credentials and try again.';
+      } else if (error.response?.status === 0 || error.message?.includes('Network')) {
+        errorMsg = 'Backend is not responding. Make sure it\'s running on port 3001.';
+      } else if (error.response?.data?.error) {
+        errorMsg = error.response.data.error;
+      }
+
+      console.error('🔐 LOGIN: Showing error to user:', errorMsg);
+      setLocalError(errorMsg);
+      alert('❌ LOGIN FAILED\n\n' + errorMsg);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleGoogleLogin = () => {
-    window.location.href = '/api/auth/google-login';
-  };
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', width: '100%', height: '100vh', background: '#020617' }}>
+    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', width: '100%', minHeight: '100vh', background: '#020617' }}>
       {/* Left Panel */}
       <div style={{
         background: 'linear-gradient(160deg,#1B1F3B 0%,#0d1026 55%,#020617 100%)',
@@ -83,16 +140,12 @@ export function LoginPage() {
 
         <div style={{ position: 'relative' }}>
           {/* Logo */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '22px' }}>
-            <svg width="40" height="40" viewBox="0 0 96 96" fill="none">
-              <rect width="96" height="96" rx="22" fill="rgba(255,255,255,0.08)"></rect>
-              <path d="M33 27 L33 69 M33 48 L58 27 M33 48 L60 69" stroke="#FFFFFF" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" fill="none"></path>
-              <circle cx="67" cy="25" r="8" fill="#4f9cf9"></circle>
-            </svg>
+          <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '22px', textDecoration: 'none', cursor: 'pointer' }}>
+            {LOGO}
             <div style={{ color: '#f1f5f9', fontSize: '19px', fontWeight: '700', letterSpacing: '-0.2px' }}>
-              Kairos <span style={{ color: '#7a8299', fontWeight: '500' }}>/ Perm Bridge</span>
+              Kairos <span style={{ color: '#7a8299', fontWeight: '500' }}>/ PermBridge</span>
             </div>
-          </div>
+          </Link>
 
           {/* Badge */}
           <div style={{
@@ -188,45 +241,6 @@ export function LoginPage() {
             margin: '0 0 32px 0',
           }}>Sign in to your Kairos workspace</p>
 
-          {/* Google Button */}
-          <button
-            onClick={handleGoogleLogin}
-            disabled={isSubmitting}
-            style={{
-              width: '100%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '10px',
-              background: '#141b30',
-              border: '1px solid #262f47',
-              color: '#e2e8f0',
-              fontSize: '14.5px',
-              fontWeight: '600',
-              padding: '12px 16px',
-              borderRadius: '10px',
-              cursor: 'pointer',
-              marginBottom: '20px',
-              transition: 'background 0.15s',
-            }}
-            onMouseEnter={(e) => e.currentTarget.style.background = '#1a2338'}
-            onMouseLeave={(e) => e.currentTarget.style.background = '#141b30'}
-          >
-            <svg width="17" height="17" viewBox="0 0 24 24">
-              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.07 5.07 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"></path>
-              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.99.66-2.25 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.85A11 11 0 0012 23z"></path>
-              <path fill="#FBBC05" d="M5.84 14.1a6.6 6.6 0 010-4.2V7.05H2.18a11 11 0 000 9.9l3.66-2.85z"></path>
-              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1A11 11 0 002.18 7.05l3.66 2.85C6.71 7.3 9.14 5.38 12 5.38z"></path>
-            </svg>
-            Continue with Google SSO
-          </button>
-
-          {/* Divider */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '14px', margin: '20px 0' }}>
-            <div style={{ flex: 1, height: '1px', background: '#1f2740' }}></div>
-            <div style={{ color: '#586178', fontSize: '12px', fontWeight: '500' }}>OR</div>
-            <div style={{ flex: 1, height: '1px', background: '#1f2740' }}></div>
-          </div>
 
           {/* Form */}
           <form onSubmit={handleEmailLogin} style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '22px' }}>
@@ -288,9 +302,24 @@ export function LoginPage() {
             </div>
 
             {/* Error */}
-            {error && (
-              <div style={{ padding: '3px', background: '#f87171', color: '#fff', fontSize: '12px', borderRadius: '6px' }}>
-                {error}
+            {(error || localError) && (
+              <div style={{
+                padding: '12px 14px',
+                background: 'rgba(248,113,113,0.1)',
+                border: '1px solid rgba(248,113,113,0.3)',
+                borderRadius: '8px',
+                display: 'flex',
+                gap: '10px',
+                alignItems: 'flex-start',
+              }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f87171" strokeWidth="2" style={{ flexShrink: 0, marginTop: '2px' }}>
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="12" y1="8" x2="12" y2="12"></line>
+                  <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+                <p style={{ color: '#f87171', fontSize: '13px', margin: '0', lineHeight: '1.4' }}>
+                  {error || localError}
+                </p>
               </div>
             )}
 
@@ -335,7 +364,7 @@ export function LoginPage() {
           </form>
 
           <p style={{ textAlign: 'center', color: '#6b7488', fontSize: '13px', margin: '0' }}>
-            Don't have a workspace? <span style={{ color: '#5b8fe0', fontWeight: '600', cursor: 'pointer' }}>Talk to sales</span>
+            Don't have an account? <Link to="/register" style={{ color: '#5b8fe0', fontWeight: '600', textDecoration: 'none' }}>Sign up</Link>
           </p>
         </div>
       </div>
@@ -343,6 +372,52 @@ export function LoginPage() {
       <style>{`
         @keyframes spin {
           to { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+          div[style*="grid"] {
+            grid-template-columns: 1fr !important;
+          }
+
+          div[style*="padding: '56px"] {
+            padding: 32px 20px !important;
+          }
+
+          div[style*="fontSize: '42px"] {
+            font-size: 28px !important;
+            line-height: 1.2 !important;
+          }
+
+          div[style*="fontSize: '19px"] {
+            font-size: 18px !important;
+          }
+
+          div[style*="gap: '36px"] {
+            gap: 24px !important;
+          }
+
+          div[style*="gap: '16px"] {
+            gap: 12px !important;
+          }
+        }
+
+        @media (max-width: 480px) {
+          div[style*="padding: '40px"] {
+            padding: 20px !important;
+          }
+
+          div[style*="fontSize: '26px"] {
+            font-size: 20px !important;
+          }
+
+          div[style*="fontSize: '14.5px"] {
+            font-size: 13px !important;
+          }
+
+          button[style*="padding: '13px"] {
+            padding: 11px 14px !important;
+            font-size: 13px !important;
+          }
         }
       `}</style>
     </div>

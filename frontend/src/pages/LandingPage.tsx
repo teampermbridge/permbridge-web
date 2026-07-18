@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
-import { ArrowRight, Zap, BarChart3, Grid3x3, Check } from 'lucide-react';
+import { ArrowRight, Zap, BarChart3, Grid3x3, Check, Menu, X } from 'lucide-react';
+import { useState } from 'react';
 
 export function LandingPage() {
   return (
@@ -12,21 +13,21 @@ export function LandingPage() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        padding: '18px 56px',
+        padding: 'clamp(12px, 4vw, 18px) clamp(20px, 5vw, 56px)',
         background: 'rgba(2,6,23,0.85)',
         backdropFilter: 'blur(10px)',
         borderBottom: '1px solid rgba(148,163,184,0.08)',
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none', cursor: 'pointer' }}>
           <svg width="28" height="28" viewBox="0 0 96 96" fill="none">
             <rect x="0" y="0" width="96" height="96" rx="22" fill="#1B1F3B"></rect>
             <path d="M33 27 L33 69 M33 48 L58 27 M33 48 L60 69" stroke="#FFFFFF" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" fill="none"></path>
             <circle cx="67" cy="25" r="8" fill="#1B73E8"></circle>
           </svg>
           <div style={{ color: '#f1f5f9', fontSize: '15.5px', fontWeight: '700' }}>
-            Perm Bridge <span style={{ color: '#586178', fontWeight: '500' }}>by Kairos</span>
+            PermBridge <span style={{ color: '#586178', fontWeight: '500' }}>by Kairos</span>
           </div>
-        </div>
+        </Link>
         <div style={{ display: 'flex', alignItems: 'center', gap: '36px' }}>
           <div style={{ color: '#aab3c9', fontSize: '14px', fontWeight: '500', cursor: 'pointer' }}>Product</div>
           <div style={{ color: '#aab3c9', fontSize: '14px', fontWeight: '500', cursor: 'pointer' }}>Pricing</div>
@@ -35,7 +36,7 @@ export function LandingPage() {
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
           <Link to="/login" style={{ color: '#d5dbe8', fontSize: '14px', fontWeight: '600', textDecoration: 'none', cursor: 'pointer' }}>Sign in</Link>
-          <Link to="/login" style={{ background: '#1B73E8', color: '#fff', fontSize: '13.5px', fontWeight: '700', padding: '10px 18px', borderRadius: '9px', textDecoration: 'none' }}>Start free trial</Link>
+          <Link to="/register" style={{ background: '#1B73E8', color: '#fff', fontSize: '13.5px', fontWeight: '700', padding: '10px 18px', borderRadius: '9px', textDecoration: 'none' }}>Start free trial</Link>
         </div>
       </div>
 
@@ -447,6 +448,93 @@ export function LandingPage() {
           <div style={{ cursor: 'pointer' }}>Status</div>
         </div>
       </div>
+
+      <style>{`
+        @media (max-width: 1024px) {
+          div[style*="padding: '96px"] {
+            padding: 60px 40px !important;
+          }
+
+          div[style*="gridTemplateColumns: 'repeat(3"] {
+            grid-template-columns: repeat(2, 1fr) !important;
+          }
+
+          div[style*="display: 'flex'"][style*="flexDirection: 'row"] {
+            flex-wrap: wrap !important;
+          }
+        }
+
+        @media (max-width: 768px) {
+          div[style*="padding: '18px"] {
+            padding: 12px 16px !important;
+          }
+
+          div[style*="padding: '56px"] {
+            padding: 32px 20px !important;
+          }
+
+          div[style*="padding: '90px"] {
+            padding: 50px 20px !important;
+          }
+
+          div[style*="padding: '36px"] {
+            padding: 24px 20px !important;
+          }
+
+          div[style*="fontSize: '56px"] {
+            font-size: 36px !important;
+            line-height: 1.2 !important;
+          }
+
+          div[style*="fontSize: '34px"] {
+            font-size: 26px !important;
+          }
+
+          div[style*="fontSize: '18px"] {
+            font-size: 16px !important;
+          }
+
+          div[style*="gap: '36px"] {
+            gap: 20px !important;
+          }
+
+          div[style*="display: 'flex'"][style*="justifyContent: 'space-between"] {
+            flex-direction: column !important;
+            gap: 16px !important;
+          }
+
+          div[style*="gridTemplateColumns: 'repeat(3"] {
+            grid-template-columns: 1fr !important;
+          }
+        }
+
+        @media (max-width: 480px) {
+          div[style*="padding: '18px"] {
+            padding: 10px 12px !important;
+          }
+
+          div[style*="gap: '16px"] {
+            gap: 8px !important;
+          }
+
+          a[style*="padding: '14px"] {
+            padding: 12px 16px !important;
+            font-size: 13px !important;
+          }
+
+          button {
+            min-height: 44px !important;
+          }
+
+          div[style*="fontSize: '15px"] {
+            font-size: 13px !important;
+          }
+
+          div[style*="fontSize: '13.5px"] {
+            font-size: 12px !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }

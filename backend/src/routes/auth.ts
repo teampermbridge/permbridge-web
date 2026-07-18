@@ -16,9 +16,16 @@ const router = Router();
 
 // ============ OAuth Flow (Salesforce) ============
 
-router.get('/salesforce/login', async (req: AuthRequest, res: Response) => {
+router.get('/salesforce/login', authenticate, async (req: AuthRequest, res: Response) => {
   try {
-    const authUrl = await getAuthorizationUrl();
+    const orgId = req.query.orgId as string;
+
+    if (!orgId) {
+      return res.status(400).json({ error: 'Missing organizationId' });
+    }
+
+    const { authUrl } = await getAuthorizationUrl(orgId, req.userId);
+
     res.json({ authUrl });
   } catch (error) {
     console.error('Salesforce login error:', error);
@@ -27,16 +34,64 @@ router.get('/salesforce/login', async (req: AuthRequest, res: Response) => {
 });
 
 router.get('/salesforce/callback', async (req: AuthRequest, res: Response) => {
-  const { code } = req.query;
-  const organizationId = req.query.state as string; // Pass org ID in state param
+  const { code, state, error: oauthError, error_description } = req.query;
+
+  console.log('🔐 OAUTH CALLBACK: Received callback', { code: !!code, state: !!state, oauthError });
+
+  // Handle OAuth errors from Salesforce
+  if (oauthError) {
+    console.error('🔐 OAUTH CALLBACK: Salesforce rejected OAuth', {
+      error: oauthError,
+      description: error_description
+    });
+
+    let errorMsg = 'Salesforce authentication failed. Please try again.';
+
+    if (oauthError === 'access_denied') {
+      errorMsg = 'You denied access. Connection cancelled.';
+    } else if (oauthError?.toString().includes('mfa') || error_description?.toString().includes('MFA')) {
+      errorMsg = 'MFA is required. Please set up phishing-resistant MFA in your Salesforce org (security key or passkey), then try connecting again.';
+    } else if (oauthError === 'invalid_scope') {
+      errorMsg = 'Salesforce app configuration error. Please contact support.';
+    }
+
+    const frontendUrl = process.env.NODE_ENV === 'production'
+      ? 'https://permbridge.vercel.app'
+      : 'http://localhost:5173';
+
+    return res.redirect(`${frontendUrl}/connect?error=${encodeURIComponent(errorMsg)}`);
+  }
 
   if (!code) {
+    console.error('🔐 OAUTH CALLBACK: Missing authorization code');
     return res.status(400).json({ error: 'Missing authorization code' });
   }
 
+  if (!state) {
+    console.error('🔐 OAUTH CALLBACK: Missing state parameter');
+    return res.status(400).json({ error: 'Missing state parameter' });
+  }
+
   try {
-    const tokenResponse = await exchangeCodeForToken(code as string);
+    // State contains: organizationId|pkceId
+    const stateParts = (state as string).split('|');
+    const organizationId = stateParts[0];
+    const pkceId = stateParts[1];
+
+    if (!organizationId || !pkceId) {
+      console.error('🔐 OAUTH CALLBACK: Invalid state format', { stateParts });
+      return res.status(400).json({ error: 'Invalid state format' });
+    }
+
+    console.log('🔐 OAUTH CALLBACK: Exchanging code for token', { organizationId });
+    const tokenResponse = await exchangeCodeForToken(code as string, pkceId);
+    console.log('🔐 OAUTH CALLBACK: Got token response, fetching user info');
     const userInfo = await getUserInfo(tokenResponse.access_token, tokenResponse.instance_url);
+
+    console.log('🔐 OAUTH CALLBACK: Storing Salesforce connection', {
+      organizationId,
+      salesforceUserId: userInfo.id
+    });
 
     // Store Salesforce connection in organization
     const result = await query(
@@ -49,7 +104,7 @@ router.get('/salesforce/callback', async (req: AuthRequest, res: Response) => {
       RETURNING id`,
       [
         organizationId,
-        req.userId,
+        tokenResponse.userId,
         userInfo.id,
         userInfo.org_id,
         tokenResponse.instance_url,
@@ -59,14 +114,43 @@ router.get('/salesforce/callback', async (req: AuthRequest, res: Response) => {
       ]
     );
 
+    console.log('🔐 OAUTH CALLBACK: Connection stored, triggering background sync');
+
+    // Trigger sync in background (don't wait for it)
+    syncSalesforceOrg(
+      result.rows[0].id,
+      tokenResponse.access_token,
+      tokenResponse.instance_url,
+      organizationId
+    ).catch((error) => {
+      console.error('🔐 OAUTH CALLBACK: Background sync error:', error);
+    });
+
     const frontendUrl = process.env.NODE_ENV === 'production'
       ? 'https://permbridge.vercel.app'
       : 'http://localhost:5173';
 
+    console.log('🔐 OAUTH CALLBACK: Success! Redirecting to dashboard');
     res.redirect(`${frontendUrl}/dashboard?org=${organizationId}&salesforce_connected=true`);
-  } catch (error) {
-    console.error('Salesforce callback error:', error);
-    res.status(500).json({ error: 'Salesforce authentication failed' });
+  } catch (error: any) {
+    console.error('🔐 OAUTH CALLBACK: Callback error:', error);
+    console.error('🔐 OAUTH CALLBACK: Error details:', {
+      message: error.message,
+      code: error.code,
+      stack: error.stack?.split('\n').slice(0, 3).join(' | ')
+    });
+
+    const frontendUrl = process.env.NODE_ENV === 'production'
+      ? 'https://permbridge.vercel.app'
+      : 'http://localhost:5173';
+
+    const errorMsg = error.message?.includes('PKCE')
+      ? 'PKCE verification failed. Please try connecting again.'
+      : error.message?.includes('MFA')
+      ? 'MFA setup required. Set up phishing-resistant MFA in Salesforce, then retry.'
+      : 'Salesforce authentication failed. Please try again.';
+
+    res.redirect(`${frontendUrl}/connect?error=${encodeURIComponent(errorMsg)}`);
   }
 });
 
@@ -214,6 +298,14 @@ router.get('/me', authenticate, async (req: AuthRequest, res: Response) => {
       [req.userId]
     );
 
+    const orgsResult = await query(
+      `SELECT o.id, o.name, o.slug FROM organizations o
+       JOIN organization_members om ON o.id = om.organization_id
+       WHERE om.user_id = $1
+       ORDER BY o.created_at DESC`,
+      [req.userId]
+    );
+
     if (userResult.rows.length === 0) {
       return res.status(404).json({ error: 'User not found' });
     }
@@ -221,6 +313,7 @@ router.get('/me', authenticate, async (req: AuthRequest, res: Response) => {
     res.json({
       user: userResult.rows[0],
       settings: settingsResult.rows[0],
+      organizations: orgsResult.rows,
     });
   } catch (error) {
     console.error('Get user error:', error);
@@ -273,6 +366,82 @@ router.post('/logout', authenticate, async (req: AuthRequest, res: Response) => 
   } catch (error) {
     console.error('Logout error:', error);
     res.status(500).json({ error: 'Logout failed' });
+  }
+});
+
+// ============ Organization Management ============
+
+router.post('/organizations', authenticate, async (req: AuthRequest, res: Response) => {
+  const { name } = req.body;
+
+  if (!name) {
+    return res.status(400).json({ error: 'Organization name required' });
+  }
+
+  try {
+    const orgSlug = name.toLowerCase().replace(/\s+/g, '-');
+
+    // Create organization
+    const orgId = uuidv4();
+    await query(
+      `INSERT INTO organizations (id, name, slug, owner_id)
+       VALUES ($1, $2, $3, $4)`,
+      [orgId, name, orgSlug, req.userId]
+    );
+
+    // Add user as owner
+    await query(
+      `INSERT INTO organization_members (organization_id, user_id, role)
+       VALUES ($1, $2, 'owner')`,
+      [orgId, req.userId]
+    );
+
+    // Create org settings
+    await query(
+      `INSERT INTO organization_settings (organization_id) VALUES ($1)`,
+      [orgId]
+    );
+
+    // Create subscription
+    await query(
+      `INSERT INTO subscriptions (organization_id, plan_id, status)
+       VALUES ($1, 'free', 'active')`,
+      [orgId]
+    );
+
+    res.json({
+      id: orgId,
+      name,
+      slug: orgSlug,
+    });
+  } catch (error) {
+    console.error('Create organization error:', error);
+    res.status(500).json({ error: 'Failed to create organization' });
+  }
+});
+
+router.delete('/organizations/:orgId', authenticate, async (req: AuthRequest, res: Response) => {
+  const { orgId } = req.params;
+
+  try {
+    // Verify user is owner
+    const ownerCheck = await query(
+      `SELECT role FROM organization_members
+       WHERE organization_id = $1 AND user_id = $2`,
+      [orgId, req.userId]
+    );
+
+    if (ownerCheck.rows.length === 0 || ownerCheck.rows[0].role !== 'owner') {
+      return res.status(403).json({ error: 'Only organization owner can delete it' });
+    }
+
+    // Delete organization (cascades to all related data)
+    await query('DELETE FROM organizations WHERE id = $1', [orgId]);
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Delete organization error:', error);
+    res.status(500).json({ error: 'Failed to delete organization' });
   }
 });
 

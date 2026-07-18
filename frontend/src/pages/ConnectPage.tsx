@@ -22,13 +22,47 @@ export function ConnectPage() {
     setIsConnecting(true);
     setError(null);
 
+    console.log('🔐 CONNECT: Starting OAuth flow');
+
     try {
+      // Get org ID from URL query params
+      const params = new URLSearchParams(window.location.search);
+      const orgId = params.get('org');
+
+      if (!orgId) {
+        console.error('🔐 CONNECT: No org ID in URL');
+        setError('Organization ID missing. Please try again.');
+        setIsConnecting(false);
+        return;
+      }
+
+      console.log('🔐 CONNECT: Getting OAuth URL', { orgId });
       // Get Salesforce OAuth URL and redirect
-      const response = await client.get('/api/auth/salesforce/login');
+      const response = await client.get(`/api/auth/salesforce/login?orgId=${orgId}`);
+      console.log('🔐 CONNECT: Got OAuth URL, redirecting to Salesforce');
       window.location.href = response.data.authUrl;
     } catch (err: any) {
-      console.error('Connect error:', err);
-      setError(err.response?.data?.error || 'Failed to connect org');
+      console.error('🔐 CONNECT: OAuth error:', err);
+      console.error('🔐 CONNECT: Error details:', {
+        status: err.response?.status,
+        data: err.response?.data,
+        message: err.message
+      });
+
+      let errorMsg = 'Failed to connect org. Please try again.';
+
+      if (err.message?.includes('Network') || err.response?.status === 0) {
+        errorMsg = 'Backend is not responding. Make sure it\'s running on port 3001.';
+      } else if (err.response?.status === 401) {
+        errorMsg = 'Your Salesforce session may have expired. Please log in again.';
+      } else if (err.response?.data?.error?.includes('MFA')) {
+        errorMsg = 'MFA is required. Set up phishing-resistant MFA in your Salesforce org, then try again.';
+      } else {
+        errorMsg = err.response?.data?.error || errorMsg;
+      }
+
+      alert('❌ CONNECTION FAILED\n\n' + errorMsg);
+      setError(errorMsg);
       setIsConnecting(false);
     }
   };
@@ -49,7 +83,20 @@ export function ConnectPage() {
   // Check if we're returning from Salesforce OAuth
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
+
+    // Check for errors from OAuth callback
+    const errorParam = params.get('error');
+    if (errorParam) {
+      console.log('🔐 CONNECT: Error from OAuth callback:', errorParam);
+      alert('❌ CONNECTION FAILED\n\n' + decodeURIComponent(errorParam));
+      setError(decodeURIComponent(errorParam));
+      // Clean up URL
+      window.history.replaceState({}, document.title, window.location.pathname + '?org=' + params.get('org'));
+      return;
+    }
+
     if (params.get('salesforce_connected') === 'true' && organization) {
+      console.log('🔐 CONNECT: OAuth successful, triggering sync');
       // We're connected! Now sync
       triggerSync();
     }
@@ -128,14 +175,27 @@ export function ConnectPage() {
       padding: '40px',
     }}>
       <div style={{ width: '100%', maxWidth: '560px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', justifyContent: 'center', marginBottom: '36px' }}>
+        <button
+          onClick={() => navigate('/user-dashboard')}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            justifyContent: 'center',
+            marginBottom: '36px',
+            background: 'transparent',
+            border: 'none',
+            cursor: 'pointer',
+            padding: 0,
+          }}
+        >
           <svg width="30" height="30" viewBox="0 0 96 96" fill="none">
             <rect width="96" height="96" rx="22" fill="#1B1F3B"></rect>
             <path d="M33 27 L33 69 M33 48 L58 27 M33 48 L60 69" stroke="#FFFFFF" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" fill="none"></path>
             <circle cx="67" cy="25" r="8" fill="#1B73E8"></circle>
           </svg>
-          <div style={{ color: '#f1f5f9', fontSize: '16px', fontWeight: '700' }}>Perm Bridge</div>
-        </div>
+          <div style={{ color: '#f1f5f9', fontSize: '16px', fontWeight: '700' }}>PermBridge</div>
+        </button>
 
         {isSyncing ? (
           <div style={{ background: '#0e1426', border: '1px solid #1f2740', borderRadius: '16px', padding: '36px', textAlign: 'center' }}>
@@ -188,8 +248,31 @@ export function ConnectPage() {
               </svg>
             </div>
             <div style={{ color: '#f1f5f9', fontSize: '20px', fontWeight: '700', marginBottom: '6px' }}>Connect your Salesforce org</div>
-            <div style={{ color: '#8891a6', fontSize: '13.5px', lineHeight: '1.55', marginBottom: '26px' }}>
+            <div style={{ color: '#8891a6', fontSize: '13.5px', lineHeight: '1.55', marginBottom: '20px' }}>
               Perm Bridge reads Profile and Permission Set metadata via the Salesforce Metadata API. No data ever leaves your org without your approval.
+            </div>
+
+            {/* MFA Warning Banner */}
+            <div style={{
+              background: 'rgba(59, 130, 246, 0.1)',
+              border: '1px solid rgba(59, 130, 246, 0.3)',
+              borderRadius: '10px',
+              padding: '14px 16px',
+              marginBottom: '24px',
+              display: 'flex',
+              gap: '12px',
+            }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2" style={{ flexShrink: 0, marginTop: '2px' }}>
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="16" x2="12" y2="12"></line>
+                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+              </svg>
+              <div style={{ fontSize: '12.5px', color: '#3b82f6', lineHeight: '1.5' }}>
+                <strong>MFA Required (July 20, 2026):</strong> Salesforce now requires phishing-resistant MFA for Admins and users with elevated permissions (Security keys or passkeys). Regular users can use any MFA method.{' '}
+                <a href="https://help.salesforce.com/s/articleView?id=005321563&type=1" target="_blank" rel="noopener noreferrer" style={{ color: '#3b82f6', fontWeight: '600', textDecoration: 'underline', cursor: 'pointer' }}>
+                  Learn more
+                </a>
+              </div>
             </div>
 
             <label style={{
@@ -228,16 +311,21 @@ export function ConnectPage() {
 
             {error && (
               <div style={{
-                padding: '12px',
+                padding: '12px 14px',
                 background: 'rgba(248,113,113,0.1)',
                 border: '1px solid rgba(248,113,113,0.3)',
                 borderRadius: '8px',
                 display: 'flex',
-                gap: '8px',
+                gap: '10px',
                 marginBottom: '22px',
+                alignItems: 'flex-start',
               }}>
-                <AlertCircle size={16} color="#f87171" />
-                <p style={{ color: '#f87171', fontSize: '13px', margin: '0' }}>{error}</p>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f87171" strokeWidth="2" style={{ flexShrink: 0, marginTop: '2px' }}>
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="12" y1="8" x2="12" y2="12"></line>
+                  <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+                <p style={{ color: '#f87171', fontSize: '13px', margin: '0', lineHeight: '1.4' }}>{error}</p>
               </div>
             )}
 

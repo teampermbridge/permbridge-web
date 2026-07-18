@@ -3,6 +3,7 @@ import { useAuth } from './hooks/useAuth';
 import { LandingPage } from './pages/LandingPage';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
+import { UserDashboard } from './pages/UserDashboard';
 import { ConnectPage } from './pages/ConnectPage';
 import { AuthSuccessPage } from './pages/AuthSuccessPage';
 import { HomePage } from './pages/HomePage';
@@ -32,6 +33,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 }
 
 function App() {
+  console.log('🚀 APP: App component rendering');
   return (
     <Router>
       <Routes>
@@ -39,10 +41,25 @@ function App() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
-        <Route path="/connect" element={<ConnectPage />} />
         <Route path="/auth-success" element={<AuthSuccessPage />} />
 
         {/* Protected routes */}
+        <Route
+          path="/user-dashboard"
+          element={
+            <ProtectedRoute>
+              <UserDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/connect"
+          element={
+            <ProtectedRoute>
+              <ConnectPage />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/dashboard"
           element={
@@ -77,7 +94,7 @@ function App() {
         />
 
         {/* Catch all */}
-        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        <Route path="*" element={<Navigate to="/user-dashboard" replace />} />
       </Routes>
     </Router>
   );

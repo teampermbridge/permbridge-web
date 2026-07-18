@@ -1,14 +1,37 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { useAuthStore } from '../store/authStore';
-import { Link } from 'react-router-dom';
-import { LogOut, Bell, ChevronDown, Zap, BarChart3, Grid3x3, ArrowRight, TrendingUp } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { LogOut, Bell, ChevronDown, Settings, Zap, BarChart3, Grid3x3, ArrowRight, TrendingUp } from 'lucide-react';
+import client from '../api/client';
 
 export function HomePage() {
+  const navigate = useNavigate();
   const { user, logout } = useAuth();
   const organization = useAuthStore((state) => state.organization);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [orgMenuOpen, setOrgMenuOpen] = useState(false);
+  const [stats, setStats] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (organization?.id) {
+      fetchStats();
+    }
+  }, [organization?.id]);
+
+  const fetchStats = async () => {
+    try {
+      setLoading(true);
+      const response = await client.get(`/api/dashboard/org/${organization?.id}`);
+      setStats(response.data);
+    } catch (error) {
+      console.error('Failed to fetch dashboard stats:', error);
+      setStats(null);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', width: '100%', minHeight: '100vh', background: '#020617' }}>
@@ -24,14 +47,25 @@ export function HomePage() {
       }}>
         {/* Left */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '28px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <button
+            onClick={() => navigate('/user-dashboard')}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+              background: 'transparent',
+              border: 'none',
+              cursor: 'pointer',
+              padding: 0,
+            }}
+          >
             <svg width="30" height="30" viewBox="0 0 96 96" fill="none">
               <rect width="96" height="96" rx="22" fill="#1B1F3B"></rect>
               <path d="M33 27 L33 69 M33 48 L58 27 M33 48 L60 69" stroke="#FFFFFF" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" fill="none"></path>
               <circle cx="67" cy="25" r="8" fill="#1B73E8"></circle>
             </svg>
-            <div style={{ color: '#f1f5f9', fontSize: '15.5px', fontWeight: '700' }}>Perm Bridge</div>
-          </div>
+            <div style={{ color: '#f1f5f9', fontSize: '15.5px', fontWeight: '700' }}>PermBridge</div>
+          </button>
           <div style={{ position: 'relative' }}>
             <div
               onClick={() => setOrgMenuOpen(!orgMenuOpen)}
@@ -69,20 +103,46 @@ export function HomePage() {
                 zIndex: 20,
               }}>
                 {['Acme Robotics — Production', 'Acme Robotics — Sandbox'].map((org, i) => (
-                  <div key={i} style={{
+                  <button
+                    key={i}
+                    onClick={() => setOrgMenuOpen(false)}
+                    style={{
+                      width: '100%',
+                      padding: '9px 10px',
+                      borderRadius: '7px',
+                      color: i === 0 ? '#e2e8f0' : '#aab3c9',
+                      fontSize: '13px',
+                      background: i === 0 ? 'rgba(27,115,232,0.12)' : 'transparent',
+                      cursor: 'pointer',
+                      border: 'none',
+                      textAlign: 'left',
+                      transition: 'background 0.2s',
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(27,115,232,0.08)'}
+                    onMouseLeave={(e) => e.currentTarget.style.background = i === 0 ? 'rgba(27,115,232,0.12)' : 'transparent'}
+                  >
+                    {org}
+                  </button>
+                ))}
+                <button
+                  onClick={() => { setOrgMenuOpen(false); navigate('/connect'); }}
+                  style={{
+                    width: '100%',
                     padding: '9px 10px',
                     borderRadius: '7px',
-                    color: i === 0 ? '#e2e8f0' : '#aab3c9',
+                    color: '#aab3c9',
                     fontSize: '13px',
-                    background: i === 0 ? 'rgba(27,115,232,0.12)' : 'transparent',
                     cursor: 'pointer',
-                  }}>
-                    {org}
-                  </div>
-                ))}
-                <div style={{ padding: '9px 10px', borderRadius: '7px', color: '#aab3c9', fontSize: '13px', cursor: 'pointer' }}>
+                    border: 'none',
+                    background: 'transparent',
+                    textAlign: 'left',
+                    transition: 'background 0.2s',
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(27,115,232,0.08)'}
+                  onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                >
                   + Connect new org
-                </div>
+                </button>
               </div>
             )}
           </div>
@@ -123,18 +183,52 @@ export function HomePage() {
                 boxShadow: '0 12px 32px rgba(0,0,0,0.5)',
                 zIndex: 20,
               }}>
-                <div style={{ padding: '9px 10px', borderRadius: '7px', color: '#aab3c9', fontSize: '13px' }}>
+                <div style={{ padding: '10px', borderRadius: '7px', color: '#8891a6', fontSize: '12px', borderBottom: '1px solid rgba(148,163,184,0.1)', marginBottom: '4px' }}>
                   {user?.email}
                 </div>
-                <div style={{ padding: '9px 10px', borderRadius: '7px', color: '#aab3c9', fontSize: '13px', cursor: 'pointer' }}>
+                <button
+                  onClick={() => { navigate('/user-dashboard'); setUserMenuOpen(false); }}
+                  style={{
+                    width: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    padding: '9px 10px',
+                    borderRadius: '7px',
+                    color: '#aab3c9',
+                    fontSize: '13px',
+                    cursor: 'pointer',
+                    border: 'none',
+                    background: 'transparent',
+                    textAlign: 'left',
+                    transition: 'background 0.2s',
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(27,115,232,0.08)'}
+                  onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                >
+                  <Settings size={14} />
                   Settings
-                </div>
-                <div
+                </button>
+                <button
                   onClick={() => { logout(); setUserMenuOpen(false); }}
-                  style={{ padding: '9px 10px', borderRadius: '7px', color: '#f87171', fontSize: '13px', fontWeight: '600', cursor: 'pointer' }}
+                  style={{
+                    width: '100%',
+                    padding: '9px 10px',
+                    borderRadius: '7px',
+                    color: '#f87171',
+                    fontSize: '13px',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    border: 'none',
+                    background: 'transparent',
+                    textAlign: 'left',
+                    transition: 'background 0.2s',
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(248,113,113,0.1)'}
+                  onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
                 >
                   Log out
-                </div>
+                </button>
               </div>
             )}
           </div>
@@ -160,9 +254,9 @@ export function HomePage() {
           {/* Stats */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '18px', marginBottom: '40px' }}>
             {[
-              { label: 'Permission sets managed', value: '128', subtitle: '↑ 14 this month', color: '#5b9cf0' },
-              { label: 'Profiles analyzed', value: '42', subtitle: 'of 58 total profiles', color: '#a78bfa' },
-              { label: 'Avg. conversion time', value: '4m 12s', subtitle: 'well under the 5-min target', color: '#4ade80' },
+              { label: 'Permission sets managed', value: stats?.permissionSets || '0', subtitle: 'synced from Salesforce', color: '#5b9cf0' },
+              { label: 'Profiles analyzed', value: stats?.profiles || '0', subtitle: `of ${stats?.profiles || 0} total profiles`, color: '#a78bfa' },
+              { label: 'Users discovered', value: stats?.users || '0', subtitle: 'across all profiles', color: '#4ade80' },
             ].map((card, i) => (
               <div key={i} style={{
                 background: '#0e1426',
@@ -282,6 +376,58 @@ export function HomePage() {
           </div>
         </div>
       </main>
+
+      <style>{`
+        @media (max-width: 1024px) {
+          div[style*="gridTemplateColumns: 'repeat(3"] {
+            grid-template-columns: repeat(2, 1fr) !important;
+          }
+        }
+
+        @media (max-width: 768px) {
+          div[style*="padding: '0 28px"] {
+            padding: 0 16px !important;
+          }
+
+          div[style*="padding: '40px 48px"] {
+            padding: 24px 16px !important;
+          }
+
+          div[style*="gap: '28px"] {
+            gap: 16px !important;
+          }
+
+          div[style*="gridTemplateColumns: 'repeat(3"] {
+            grid-template-columns: 1fr !important;
+          }
+
+          div[style*="fontSize: '15.5px"] {
+            font-size: 14px !important;
+          }
+
+          div[style*="display: 'flex'"] {
+            flex-wrap: wrap !important;
+          }
+        }
+
+        @media (max-width: 480px) {
+          div[style*="fontSize: '20px"] {
+            font-size: 16px !important;
+          }
+
+          div[style*="fontSize: '16.5px"] {
+            font-size: 15px !important;
+          }
+
+          div[style*="fontSize: '13.5px"] {
+            font-size: 12px !important;
+          }
+
+          button {
+            min-height: 44px !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }

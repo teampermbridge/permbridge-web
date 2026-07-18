@@ -67,6 +67,8 @@ CREATE TABLE IF NOT EXISTS salesforce_connections (
   name VARCHAR(255), -- friendly name (e.g., "Production", "Sandbox")
   is_primary BOOLEAN DEFAULT false,
   last_synced_at TIMESTAMP,
+  sync_status VARCHAR(50) DEFAULT 'pending', -- pending, running, success, error
+  sync_error_message TEXT,
   created_at TIMESTAMP DEFAULT NOW(),
   updated_at TIMESTAMP DEFAULT NOW(),
   UNIQUE(organization_id, salesforce_org_id)
@@ -152,29 +154,153 @@ CREATE TABLE IF NOT EXISTS organization_settings (
 
 CREATE INDEX idx_org_settings_org_id ON organization_settings(organization_id);
 
--- Migrate old user data structure
--- Note: This assumes the old users table had different columns
-ALTER TABLE profiles
-DROP CONSTRAINT IF EXISTS profiles_user_id_fkey;
+-- Salesforce Users (synced from Salesforce API)
+CREATE TABLE IF NOT EXISTS salesforce_users (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  salesforce_connection_id UUID NOT NULL REFERENCES salesforce_connections(id) ON DELETE CASCADE,
+  salesforce_user_id VARCHAR(255) NOT NULL,
+  username VARCHAR(255),
+  email VARCHAR(255),
+  first_name VARCHAR(255),
+  last_name VARCHAR(255),
+  profile_id VARCHAR(255),
+  profile_name VARCHAR(255),
+  is_active BOOLEAN DEFAULT true,
+  last_login TIMESTAMP,
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW(),
+  UNIQUE(organization_id, salesforce_connection_id, salesforce_user_id)
+);
 
-ALTER TABLE permission_sets
-DROP CONSTRAINT IF EXISTS permission_sets_user_id_fkey;
+CREATE INDEX idx_salesforce_users_org_id ON salesforce_users(organization_id);
+CREATE INDEX idx_salesforce_users_connection_id ON salesforce_users(salesforce_connection_id);
+CREATE INDEX idx_salesforce_users_salesforce_id ON salesforce_users(salesforce_user_id);
 
-ALTER TABLE conversions
-DROP CONSTRAINT IF EXISTS conversions_user_id_fkey;
+-- Object Permissions (synced from Salesforce API)
+CREATE TABLE IF NOT EXISTS object_permissions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  salesforce_connection_id UUID NOT NULL REFERENCES salesforce_connections(id) ON DELETE CASCADE,
+  parent_id VARCHAR(255) NOT NULL, -- Salesforce Profile or PermissionSet ID
+  parent_type VARCHAR(50) NOT NULL, -- 'Profile' or 'PermissionSet'
+  salesforce_object_name VARCHAR(255) NOT NULL,
+  permissions_create BOOLEAN DEFAULT false,
+  permissions_read BOOLEAN DEFAULT false,
+  permissions_edit BOOLEAN DEFAULT false,
+  permissions_delete BOOLEAN DEFAULT false,
+  permissions_view_all BOOLEAN DEFAULT false,
+  permissions_modify_all BOOLEAN DEFAULT false,
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW(),
+  UNIQUE(organization_id, salesforce_connection_id, parent_id, salesforce_object_name)
+);
 
-ALTER TABLE audit_logs
-DROP CONSTRAINT IF EXISTS audit_logs_user_id_fkey;
+CREATE INDEX idx_object_permissions_org_id ON object_permissions(organization_id);
+CREATE INDEX idx_object_permissions_connection_id ON object_permissions(salesforce_connection_id);
+CREATE INDEX idx_object_permissions_parent_id ON object_permissions(parent_id, parent_type);
 
--- Re-add constraints with new user table
-ALTER TABLE profiles
-ADD CONSTRAINT profiles_user_id_fkey FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
+-- Salesforce Profiles (synced from Salesforce API)
+CREATE TABLE IF NOT EXISTS profiles (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  salesforce_connection_id UUID REFERENCES salesforce_connections(id) ON DELETE CASCADE,
+  salesforce_profile_id VARCHAR(255) NOT NULL,
+  name VARCHAR(255) NOT NULL,
+  description TEXT,
+  user_count INT DEFAULT 0,
+  object_permission_count INT DEFAULT 0,
+  last_synced_at TIMESTAMP,
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW(),
+  UNIQUE(organization_id, salesforce_profile_id)
+);
 
-ALTER TABLE permission_sets
-ADD CONSTRAINT permission_sets_user_id_fkey FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
+CREATE INDEX idx_profiles_org_id ON profiles(organization_id);
+CREATE INDEX idx_profiles_salesforce_id ON profiles(salesforce_profile_id);
+CREATE INDEX idx_profiles_connection_id ON profiles(salesforce_connection_id);
 
-ALTER TABLE conversions
-ADD CONSTRAINT conversions_user_id_fkey FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
+-- Salesforce Permission Sets (synced from Salesforce API)
+CREATE TABLE IF NOT EXISTS permission_sets (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  salesforce_connection_id UUID REFERENCES salesforce_connections(id) ON DELETE CASCADE,
+  salesforce_permset_id VARCHAR(255) NOT NULL,
+  name VARCHAR(255) NOT NULL,
+  description TEXT,
+  user_count INT DEFAULT 0,
+  object_permission_count INT DEFAULT 0,
+  last_synced_at TIMESTAMP,
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW(),
+  UNIQUE(organization_id, salesforce_permset_id)
+);
 
-ALTER TABLE audit_logs
-ADD CONSTRAINT audit_logs_user_id_fkey FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
+CREATE INDEX idx_permission_sets_org_id ON permission_sets(organization_id);
+CREATE INDEX idx_permission_sets_salesforce_id ON permission_sets(salesforce_permset_id);
+CREATE INDEX idx_permission_sets_connection_id ON permission_sets(salesforce_connection_id);
+
+-- Field Permissions (synced from Salesforce API)
+CREATE TABLE IF NOT EXISTS field_permissions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  salesforce_connection_id UUID NOT NULL REFERENCES salesforce_connections(id) ON DELETE CASCADE,
+  parent_id VARCHAR(255) NOT NULL, -- Salesforce Profile or PermissionSet ID
+  parent_type VARCHAR(50) NOT NULL, -- 'Profile' or 'PermissionSet'
+  salesforce_object_name VARCHAR(255) NOT NULL,
+  field_name VARCHAR(255) NOT NULL,
+  permissions_edit BOOLEAN DEFAULT false,
+  permissions_read BOOLEAN DEFAULT false,
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW(),
+  UNIQUE(organization_id, salesforce_connection_id, parent_id, salesforce_object_name, field_name)
+);
+
+CREATE INDEX idx_field_permissions_org_id ON field_permissions(organization_id);
+CREATE INDEX idx_field_permissions_connection_id ON field_permissions(salesforce_connection_id);
+CREATE INDEX idx_field_permissions_parent_id ON field_permissions(parent_id, parent_type);
+
+-- Sync Jobs (track background sync progress)
+CREATE TABLE IF NOT EXISTS sync_jobs (
+  id UUID PRIMARY KEY,
+  organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  salesforce_connection_id UUID NOT NULL REFERENCES salesforce_connections(id) ON DELETE CASCADE,
+  job_type VARCHAR(50) NOT NULL, -- full_sync, incremental_sync
+  status VARCHAR(50) NOT NULL DEFAULT 'pending', -- pending, running, completed, failed
+  progress INT DEFAULT 0,
+  error_message TEXT,
+  started_at TIMESTAMP DEFAULT NOW(),
+  completed_at TIMESTAMP,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE INDEX idx_sync_jobs_org_id ON sync_jobs(organization_id);
+CREATE INDEX idx_sync_jobs_connection_id ON sync_jobs(salesforce_connection_id);
+CREATE INDEX idx_sync_jobs_status ON sync_jobs(status);
+
+-- Permission Conversions (audit trail)
+CREATE TABLE IF NOT EXISTS conversions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  source_type VARCHAR(50) NOT NULL, -- profile, permission_set
+  source_id VARCHAR(255) NOT NULL,
+  target_profiles TEXT[], -- array of profile IDs
+  conversion_result JSONB,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE INDEX idx_conversions_org_id ON conversions(organization_id);
+
+-- Audit logs
+CREATE TABLE IF NOT EXISTS audit_logs (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  action VARCHAR(100) NOT NULL,
+  resource_type VARCHAR(50),
+  resource_id VARCHAR(255),
+  details JSONB,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE INDEX idx_audit_logs_org_id ON audit_logs(organization_id);
+CREATE INDEX idx_audit_logs_action ON audit_logs(action);
