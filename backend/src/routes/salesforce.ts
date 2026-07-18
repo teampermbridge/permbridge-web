@@ -254,6 +254,37 @@ router.get('/org/:orgId/permsets/:permsetId/permissions', authenticate, async (r
   }
 });
 
+// GET /api/salesforce/debug/:orgId - Debug sync status
+router.get('/debug/:orgId', authenticate, async (req: AuthRequest, res: Response) => {
+  const { orgId } = req.params;
+
+  try {
+    const connResult = await query(
+      `SELECT id, sync_status, sync_error_message, last_synced_at FROM salesforce_connections WHERE organization_id = $1`,
+      [orgId]
+    );
+
+    const profileResult = await query(
+      `SELECT COUNT(*) as count FROM profiles WHERE organization_id = $1`,
+      [orgId]
+    );
+
+    const syncJobResult = await query(
+      `SELECT id, status, progress, error_message FROM sync_jobs WHERE organization_id = $1 ORDER BY started_at DESC LIMIT 1`,
+      [orgId]
+    );
+
+    res.json({
+      connections: connResult.rows,
+      profileCount: profileResult.rows[0],
+      latestSyncJob: syncJobResult.rows[0],
+    });
+  } catch (error) {
+    console.error('Debug error:', error);
+    res.status(500).json({ error: 'Debug query failed' });
+  }
+});
+
 // POST /api/salesforce/org/:orgId/sync - Manually trigger sync
 router.post('/:orgId/sync', authenticate, async (req: AuthRequest, res: Response) => {
   const { orgId } = req.params;

@@ -28,7 +28,6 @@ export function SummarizerPage() {
   const [permissions, setPermissions] = useState<PermissionDetail[]>([]);
   const [expandedObjects, setExpandedObjects] = useState<Set<string>>(new Set());
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [syncing, setSyncing] = useState(false);
 
   useEffect(() => {
     if (organization?.id) {
@@ -96,21 +95,6 @@ export function SummarizerPage() {
       newExpanded.add(objectName);
     }
     setExpandedObjects(newExpanded);
-  };
-
-  const triggerSync = async () => {
-    if (!organization?.id) return;
-    try {
-      setSyncing(true);
-      await client.post(`/api/salesforce/${organization.id}/sync`);
-      setTimeout(() => {
-        fetchData();
-        setSyncing(false);
-      }, 2000);
-    } catch (error) {
-      console.error('Sync error:', error);
-      setSyncing(false);
-    }
   };
 
   const exportAsCSV = () => {
@@ -303,30 +287,8 @@ export function SummarizerPage() {
                     Loading {type}s...
                   </div>
                 ) : (type === 'profile' ? profiles : permsets).length === 0 ? (
-                  <div style={{ padding: '16px' }}>
-                    <div style={{ color: '#8891a6', fontSize: '13px', marginBottom: '12px' }}>
-                      No {type}s synced yet.
-                    </div>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        triggerSync();
-                      }}
-                      disabled={syncing}
-                      style={{
-                        width: '100%',
-                        padding: '8px 12px',
-                        background: syncing ? '#1c2540' : '#1B73E8',
-                        border: 'none',
-                        color: '#fff',
-                        fontSize: '12px',
-                        fontWeight: '600',
-                        borderRadius: '6px',
-                        cursor: syncing ? 'not-allowed' : 'pointer',
-                        opacity: syncing ? 0.6 : 1,
-                      }}>
-                      {syncing ? 'Syncing...' : 'Sync Now'}
-                    </button>
+                  <div style={{ padding: '16px', color: '#8891a6', fontSize: '13px' }}>
+                    No {type}s found. Make sure your Salesforce org is connected.
                   </div>
                 ) : (
                   (type === 'profile' ? profiles : permsets).map((item, i) => (
