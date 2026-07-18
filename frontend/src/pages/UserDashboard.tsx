@@ -100,6 +100,13 @@ export function UserDashboard() {
       // Clear from auth store if it's the current org
       if (organization?.id === orgId) {
         setOrganization(null);
+        // Clear localStorage to ensure it's removed
+        const storage = localStorage.getItem('auth-storage');
+        if (storage) {
+          const parsed = JSON.parse(storage);
+          parsed.state.organization = null;
+          localStorage.setItem('auth-storage', JSON.stringify(parsed));
+        }
       }
       // Refresh organizations list
       await fetchOrganizations();
