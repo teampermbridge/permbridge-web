@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { LogOut, Plus, Settings, Building2, User, Trash2 } from 'lucide-react';
 import client from '../api/client';
 
 export function UserDashboard() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const user = useAuthStore((state) => state.user);
   const organization = useAuthStore((state) => state.organization);
+  const setOrganization = useAuthStore((state) => state.setOrganization);
   const setToken = useAuthStore((state) => state.setToken);
   const setUser = useAuthStore((state) => state.setUser);
   const [activeTab, setActiveTab] = useState<'overview' | 'organizations' | 'settings'>('overview');
@@ -38,6 +40,17 @@ export function UserDashboard() {
 
     checkConnections();
   }, [organization?.id]);
+
+  // Handle org parameter from URL (e.g., after OAuth redirect)
+  useEffect(() => {
+    const orgIdFromUrl = searchParams.get('org');
+    if (orgIdFromUrl) {
+      // Set it in auth store so the rest of the app uses it
+      setOrganization({ id: orgIdFromUrl });
+      // Clean up URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, [searchParams, setOrganization]);
 
   // Fetch actual organizations from database
   useEffect(() => {
