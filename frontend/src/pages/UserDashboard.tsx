@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
-import { LogOut, Plus, Settings, Building2, User } from 'lucide-react';
+import { LogOut, Plus, Settings, Building2, User, Trash2 } from 'lucide-react';
+import client from '../api/client';
 
 export function UserDashboard() {
   const navigate = useNavigate();
@@ -10,6 +11,83 @@ export function UserDashboard() {
   const setToken = useAuthStore((state) => state.setToken);
   const setUser = useAuthStore((state) => state.setUser);
   const [activeTab, setActiveTab] = useState<'overview' | 'organizations' | 'settings'>('overview');
+  const [salesforceConnected, setSalesforceConnected] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [organizations, setOrganizations] = useState<any[]>([]);
+  const [orgsLoading, setOrgsLoading] = useState(true);
+
+  // Fetch actual Salesforce connections from database
+  useEffect(() => {
+    const checkConnections = async () => {
+      try {
+        if (!organization?.id) {
+          setSalesforceConnected(false);
+          setLoading(false);
+          return;
+        }
+
+        const res = await client.get(`/api/salesforce/${organization.id}/connections`);
+        setSalesforceConnected(res.data && res.data.length > 0);
+      } catch (error) {
+        console.error('Failed to check connections:', error);
+        setSalesforceConnected(false);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkConnections();
+  }, [organization?.id]);
+
+  // Fetch actual organizations from database
+  useEffect(() => {
+    fetchOrganizations();
+  }, []);
+
+  const fetchOrganizations = async () => {
+    try {
+      const res = await client.get('/api/auth/me');
+      if (res.data.organizations) {
+        setOrganizations(res.data.organizations);
+      } else {
+        setOrganizations([]);
+      }
+    } catch (error) {
+      console.error('Failed to fetch organizations:', error);
+      setOrganizations([]);
+    } finally {
+      setOrgsLoading(false);
+    }
+  };
+
+  const handleAddOrganization = async () => {
+    const orgName = prompt('Enter organization name:');
+    if (!orgName) return;
+
+    try {
+      const res = await client.post('/api/auth/organizations', { name: orgName });
+      // Refresh organizations list
+      await fetchOrganizations();
+      // Auto-navigate to connect Salesforce for this org
+      navigate(`/connect?org=${res.data.id}`);
+    } catch (error) {
+      alert('Failed to create organization');
+      console.error('Create org error:', error);
+    }
+  };
+
+  const handleDeleteOrganization = async (orgId: string, orgName: string) => {
+    if (!confirm(`Delete "${orgName}" and all its data? This cannot be undone.`)) return;
+
+    try {
+      await client.delete(`/api/auth/organizations/${orgId}`);
+      // Refresh organizations list
+      await fetchOrganizations();
+    } catch (error) {
+      alert('Failed to delete organization');
+      console.error('Delete org error:', error);
+    }
+  };
 
   const handleLogout = () => {
     localStorage.removeItem('auth_token');
@@ -162,7 +240,7 @@ export function UserDashboard() {
               {/* Quick Stats */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginBottom: '40px' }}>
                 {[
-                  { label: 'Connected Orgs', value: organization ? '1' : '0' },
+                  { label: 'Connected Orgs', value: organizations.length.toString() },
                   { label: 'Total Users', value: '—' },
                   { label: 'Permissions Managed', value: '—' },
                 ].map((stat, i) => (
@@ -182,8 +260,8 @@ export function UserDashboard() {
                 ))}
               </div>
 
-              {/* Current Org */}
-              {organization && (
+              {/* Current Org - Show only if org exists AND has Salesforce connection */}
+              {organization && salesforceConnected && !loading && (
                 <div style={{ background: '#0e1426', border: '1px solid #1f2740', borderRadius: '12px', padding: '24px' }}>
                   <h3 style={{ color: '#f1f5f9', fontSize: '16px', fontWeight: '700', margin: '0 0 16px 0' }}>
                     Current Organization
@@ -218,7 +296,8 @@ export function UserDashboard() {
                 </div>
               )}
 
-              {!organization && (
+              {/* Show connect prompt if no org or no Salesforce connection */}
+              {(!organization || !salesforceConnected) && !loading && (
                 <div style={{
                   background: 'rgba(27,115,232,0.08)',
                   border: '1px solid rgba(27,115,232,0.3)',
@@ -227,13 +306,15 @@ export function UserDashboard() {
                   textAlign: 'center',
                 }}>
                   <div style={{ color: '#f1f5f9', fontSize: '16px', fontWeight: '700', marginBottom: '8px' }}>
-                    No Organization Connected
+                    {!organization ? 'No Organization Yet' : 'Connect Salesforce'}
                   </div>
                   <p style={{ color: '#8891a6', fontSize: '13px', margin: '0 0 16px 0' }}>
-                    Connect your first Salesforce organization to get started.
+                    {!organization
+                      ? 'Create your first organization to get started.'
+                      : 'Connect your Salesforce organization to sync profiles and permissions.'}
                   </p>
                   <button
-                    onClick={() => navigate('/connect')}
+                    onClick={() => setActiveTab('organizations')}
                     style={{
                       display: 'inline-flex',
                       alignItems: 'center',
@@ -251,7 +332,7 @@ export function UserDashboard() {
                     onMouseLeave={(e) => e.currentTarget.style.background = '#1B73E8'}
                   >
                     <Plus size={16} />
-                    Connect Organization
+                    {!organization ? 'Add Organization' : 'Connect Salesforce'}
                   </button>
                 </div>
               )}
@@ -271,7 +352,7 @@ export function UserDashboard() {
                   </p>
                 </div>
                 <button
-                  onClick={() => navigate('/connect')}
+                  onClick={handleAddOrganization}
                   style={{
                     display: 'flex',
                     alignItems: 'center',
@@ -293,55 +374,82 @@ export function UserDashboard() {
                 </button>
               </div>
 
-              {organization ? (
-                <div style={{
-                  background: '#0e1426',
-                  border: '1px solid #1f2740',
-                  borderRadius: '12px',
-                  overflow: 'hidden',
-                }}>
-                  <div style={{ padding: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                      <div style={{
-                        width: '48px',
-                        height: '48px',
-                        borderRadius: '10px',
-                        background: 'linear-gradient(135deg, #1B73E8, #4f9cf9)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}>
-                        <Building2 size={24} color="#fff" />
-                      </div>
-                      <div>
-                        <div style={{ color: '#f1f5f9', fontSize: '15px', fontWeight: '600', marginBottom: '2px' }}>
-                          {organization.name}
+              {!orgsLoading && organizations.length > 0 ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  {organizations.map((org: any) => (
+                    <div key={org.id} style={{
+                      background: '#0e1426',
+                      border: '1px solid #1f2740',
+                      borderRadius: '12px',
+                      overflow: 'hidden',
+                    }}>
+                      <div style={{ padding: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                          <div style={{
+                            width: '48px',
+                            height: '48px',
+                            borderRadius: '10px',
+                            background: 'linear-gradient(135deg, #1B73E8, #4f9cf9)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                          }}>
+                            <Building2 size={24} color="#fff" />
+                          </div>
+                          <div>
+                            <div style={{ color: '#f1f5f9', fontSize: '15px', fontWeight: '600', marginBottom: '2px' }}>
+                              {org.name}
+                            </div>
+                            <div style={{ color: '#8891a6', fontSize: '12px' }}>
+                              Organization
+                            </div>
+                          </div>
                         </div>
-                        <div style={{ color: '#8891a6', fontSize: '12px' }}>
-                          Primary Organization
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <button
+                            onClick={() => navigate(`/dashboard?org=${org.id}`)}
+                            style={{
+                              padding: '8px 14px',
+                              background: '#141b30',
+                              border: '1px solid #262f47',
+                              color: '#d5dbe8',
+                              fontSize: '12px',
+                              fontWeight: '600',
+                              borderRadius: '8px',
+                              cursor: 'pointer',
+                            }}
+                            onMouseEnter={(e) => e.currentTarget.style.background = '#1a2138'}
+                            onMouseLeave={(e) => e.currentTarget.style.background = '#141b30'}
+                          >
+                            Access
+                          </button>
+                          <button
+                            onClick={() => handleDeleteOrganization(org.id, org.name)}
+                            style={{
+                              padding: '8px 12px',
+                              background: 'rgba(248,113,113,0.1)',
+                              border: '1px solid rgba(248,113,113,0.3)',
+                              color: '#f87171',
+                              fontSize: '12px',
+                              fontWeight: '600',
+                              borderRadius: '8px',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                            }}
+                            onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(248,113,113,0.2)'}
+                            onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(248,113,113,0.1)'}
+                          >
+                            <Trash2 size={12} />
+                            Delete
+                          </button>
                         </div>
                       </div>
                     </div>
-                    <button
-                      onClick={() => navigate('/dashboard')}
-                      style={{
-                        padding: '8px 14px',
-                        background: '#141b30',
-                        border: '1px solid #262f47',
-                        color: '#d5dbe8',
-                        fontSize: '12px',
-                        fontWeight: '600',
-                        borderRadius: '8px',
-                        cursor: 'pointer',
-                      }}
-                      onMouseEnter={(e) => e.currentTarget.style.background = '#1a2138'}
-                      onMouseLeave={(e) => e.currentTarget.style.background = '#141b30'}
-                    >
-                      Access
-                    </button>
-                  </div>
+                  ))}
                 </div>
-              ) : (
+              ) : !orgsLoading ? (
                 <div style={{
                   background: '#0e1426',
                   border: '1px dashed #262f47',
@@ -356,6 +464,10 @@ export function UserDashboard() {
                   <p style={{ color: '#8891a6', fontSize: '13px', margin: '0 0 16px 0' }}>
                     Connect your first Salesforce organization to get started.
                   </p>
+                </div>
+              ) : (
+                <div style={{ color: '#8891a6', textAlign: 'center', padding: '40px' }}>
+                  Loading organizations...
                 </div>
               )}
             </div>

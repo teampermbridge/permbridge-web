@@ -1,4 +1,5 @@
-import * as jsforce from 'jsforce';
+import jsforce from 'jsforce';
+import { createHash, randomBytes } from 'crypto';
 
 type Connection = jsforce.Connection;
 
@@ -20,27 +21,60 @@ interface SalesforceUserInfo {
   instance_url: string;
 }
 
-export async function getAuthorizationUrl(): Promise<string> {
+// Simple in-memory store for PKCE verifiers (production should use Redis)
+const pkceStore = new Map<string, { verifier: string; challenge: string; userId: string; createdAt: number }>();
+
+function generateCodeVerifier(): string {
+  return randomBytes(32).toString('hex');
+}
+
+function generateCodeChallenge(verifier: string): string {
+  return createHash('sha256').update(verifier).digest('base64url');
+}
+
+export async function getAuthorizationUrl(organizationId?: string, userId?: string): Promise<{ authUrl: string; pkceId: string }> {
   const clientId = process.env.SALESFORCE_CLIENT_ID!;
   const redirectUri = process.env.SALESFORCE_REDIRECT_URI!;
   const instanceUrl = process.env.SALESFORCE_INSTANCE_URL || 'https://login.salesforce.com';
+
+  const verifier = generateCodeVerifier();
+  const challenge = generateCodeChallenge(verifier);
+  const pkceId = randomBytes(16).toString('hex');
+
+  // Store verifier, challenge, and userId with session ID
+  pkceStore.set(pkceId, { verifier, challenge, userId: userId || '', createdAt: Date.now() });
+  setTimeout(() => pkceStore.delete(pkceId), 600000); // 10 min expiry
+
+  // Encode both organizationId and pkceId in state
+  const state = organizationId ? `${organizationId}|${pkceId}` : pkceId;
 
   const params = new URLSearchParams({
     client_id: clientId,
     redirect_uri: redirectUri,
     response_type: 'code',
-    scope: 'full refresh_token api',
+    scope: 'api refresh_token',
     prompt: 'login',
+    code_challenge: challenge,
+    code_challenge_method: 'S256',
+    state: state,
   });
 
-  return `${instanceUrl}/services/oauth2/authorize?${params}`;
+  return {
+    authUrl: `${instanceUrl}/services/oauth2/authorize?${params}`,
+    pkceId,
+  };
 }
 
-export async function exchangeCodeForToken(code: string): Promise<SalesforceTokenResponse> {
+export async function exchangeCodeForToken(code: string, pkceId: string): Promise<SalesforceTokenResponse & { userId: string }> {
   const clientId = process.env.SALESFORCE_CLIENT_ID!;
   const clientSecret = process.env.SALESFORCE_CLIENT_SECRET!;
   const redirectUri = process.env.SALESFORCE_REDIRECT_URI!;
   const instanceUrl = process.env.SALESFORCE_INSTANCE_URL || 'https://login.salesforce.com';
+
+  const pkceData = pkceStore.get(pkceId);
+  if (!pkceData) {
+    throw new Error('PKCE session not found. Please try connecting again.');
+  }
 
   const params = new URLSearchParams({
     grant_type: 'authorization_code',
@@ -48,6 +82,7 @@ export async function exchangeCodeForToken(code: string): Promise<SalesforceToke
     client_id: clientId,
     client_secret: clientSecret,
     redirect_uri: redirectUri,
+    code_verifier: pkceData.verifier,
   });
 
   const response = await fetch(`${instanceUrl}/services/oauth2/token`, {
@@ -63,7 +98,9 @@ export async function exchangeCodeForToken(code: string): Promise<SalesforceToke
     throw new Error(`Token exchange failed: ${error}`);
   }
 
-  return response.json();
+  pkceStore.delete(pkceId);
+  const tokenResponse = await response.json();
+  return { ...tokenResponse, userId: pkceData.userId };
 }
 
 export async function getUserInfo(

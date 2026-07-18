@@ -26,32 +26,97 @@ export function RegisterPage() {
   const [fullName, setFullName] = useState('');
   const [organizationName, setOrganizationName] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [localError, setLocalError] = useState<string | null>(null);
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    setError(null);
+    setLocalError(null);
+
+    console.log('📝 REGISTER: Starting registration', { email });
+
+    if (!email || !password || !fullName || !organizationName) {
+      console.warn('📝 REGISTER: Missing required fields');
+      setLocalError('All fields are required');
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (password.length < 8) {
+      console.warn('📝 REGISTER: Password too short');
+      setLocalError('Password must be at least 8 characters');
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      console.warn('📝 REGISTER: Invalid email format');
+      setLocalError('Please enter a valid email address');
+      setIsSubmitting(false);
+      return;
+    }
 
     try {
+      console.log('📝 REGISTER: Sending POST to /api/auth/register');
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
+
       const response = await client.post('/api/auth/register', {
         email,
         password,
         full_name: fullName,
         organization_name: organizationName,
+      }, { signal: controller.signal as any });
+      clearTimeout(timeoutId);
+
+      console.log('📝 REGISTER: Got response from backend', {
+        hasToken: !!response.data.token,
+        hasUser: !!response.data.user,
+        hasOrganization: !!response.data.organization
       });
 
       const { token, user, organization } = response.data;
 
+      if (!token) {
+        console.error('📝 REGISTER: No token in response!');
+        throw new Error('No token received from server');
+      }
+
+      console.log('📝 REGISTER: Setting localStorage auth_token');
       localStorage.setItem('auth_token', token);
+      console.log('📝 REGISTER: Token stored, updating auth store');
+
       setToken(token);
       setUser(user);
       setOrganization(organization);
       setOrganizations([organization]);
 
+      console.log('📝 REGISTER: About to navigate to /user-dashboard');
       navigate('/user-dashboard');
+      console.log('📝 REGISTER: Navigation completed');
     } catch (error: any) {
-      console.error('Registration error:', error);
-      setError(error.response?.data?.error || 'Registration failed');
+      console.error('📝 REGISTER: ERROR', error);
+      console.error('📝 REGISTER: Error details', {
+        status: error.response?.status,
+        data: error.response?.data,
+        message: error.message,
+        name: error.name
+      });
+
+      let errorMsg = 'Registration failed. Please try again.';
+      if (error.name === 'AbortError') {
+        errorMsg = 'Request timed out. Check your connection and try again.';
+      } else if (error.response?.status === 409) {
+        errorMsg = 'Email already in use. Try logging in instead.';
+      } else if (error.response?.status === 0 || error.message?.includes('Network')) {
+        errorMsg = 'Backend is not responding. Make sure it\'s running on port 3001.';
+      } else if (error.response?.data?.error) {
+        errorMsg = error.response.data.error;
+      }
+
+      console.error('📝 REGISTER: Showing error to user:', errorMsg);
+      setLocalError(errorMsg);
+      alert('❌ REGISTRATION FAILED\n\n' + errorMsg);
     } finally {
       setIsSubmitting(false);
     }
@@ -297,9 +362,24 @@ export function RegisterPage() {
               <p style={{ color: '#586178', fontSize: '12.5px', margin: '6px 0 0 0' }}>Min. 8 characters</p>
             </div>
 
-            {error && (
-              <div style={{ padding: '3px', background: '#f87171', color: '#fff', fontSize: '12px', borderRadius: '6px' }}>
-                {error}
+            {(error || localError) && (
+              <div style={{
+                padding: '12px 14px',
+                background: 'rgba(248,113,113,0.1)',
+                border: '1px solid rgba(248,113,113,0.3)',
+                borderRadius: '8px',
+                display: 'flex',
+                gap: '10px',
+                alignItems: 'flex-start',
+              }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f87171" strokeWidth="2" style={{ flexShrink: 0, marginTop: '2px' }}>
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="12" y1="8" x2="12" y2="12"></line>
+                  <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+                <p style={{ color: '#f87171', fontSize: '13px', margin: '0', lineHeight: '1.4' }}>
+                  {error || localError}
+                </p>
               </div>
             )}
 

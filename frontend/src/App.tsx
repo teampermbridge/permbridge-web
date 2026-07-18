@@ -33,6 +33,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 }
 
 function App() {
+  console.log('🚀 APP: App component rendering');
   return (
     <Router>
       <Routes>

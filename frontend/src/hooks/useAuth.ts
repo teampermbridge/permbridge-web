@@ -18,12 +18,16 @@ export function useAuth() {
       setLoading(true);
       auth
         .getCurrentUser()
-        .then((res) => setUser(res.data))
+        .then((res) => {
+          setUser(res.data.user);
+        })
         .catch((err) => {
-          console.error('Failed to fetch user info:', err);
+          console.error('useAuth: Failed to fetch user info:', err);
           setError('Failed to load user info');
         })
-        .finally(() => setLoading(false));
+        .finally(() => {
+          setLoading(false);
+        });
     }
   }, [token, user, setUser, setLoading, setError]);
 
