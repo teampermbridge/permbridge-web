@@ -320,9 +320,10 @@ export function SummarizerPage() {
                         textAlign: 'left',
                         transition: 'background 0.12s',
                       }}>
-                    {item.name}
-                  </button>
-                ))}
+                      {item.name}
+                    </button>
+                  ))
+                )}
               </div>
             )}
           </div>
