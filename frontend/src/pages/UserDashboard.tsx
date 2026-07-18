@@ -44,13 +44,15 @@ export function UserDashboard() {
   // Handle org parameter from URL (e.g., after OAuth redirect)
   useEffect(() => {
     const orgIdFromUrl = searchParams.get('org');
-    if (orgIdFromUrl) {
-      // Set it in auth store so the rest of the app uses it
-      setOrganization({ id: orgIdFromUrl });
-      // Clean up URL
-      window.history.replaceState({}, document.title, window.location.pathname);
+    if (orgIdFromUrl && organizations.length > 0) {
+      const foundOrg = organizations.find(org => org.id === orgIdFromUrl);
+      if (foundOrg) {
+        setOrganization(foundOrg);
+        // Clean up URL
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
     }
-  }, [searchParams, setOrganization]);
+  }, [searchParams, organizations, setOrganization]);
 
   // Fetch actual organizations from database
   useEffect(() => {
