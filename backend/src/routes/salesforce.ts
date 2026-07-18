@@ -189,4 +189,68 @@ router.get('/org/:orgId/permsets', authenticate, async (req: AuthRequest, res: R
   }
 });
 
+// GET /api/salesforce/org/:orgId/profiles/:profileId/permissions - Get profile permissions
+router.get('/org/:orgId/profiles/:profileId/permissions', authenticate, async (req: AuthRequest, res: Response) => {
+  const { orgId, profileId } = req.params;
+
+  try {
+    const result = await query(
+      `SELECT
+        salesforce_object_name as "objectName",
+        permissions_create as "create",
+        permissions_read as "read",
+        permissions_edit as "edit",
+        permissions_delete as "delete",
+        permissions_view_all as "viewAll",
+        permissions_modify_all as "modifyAll"
+       FROM object_permissions
+       WHERE organization_id = $1
+         AND parent_id = $2
+         AND parent_type = 'Profile'
+       ORDER BY salesforce_object_name ASC`,
+      [orgId, profileId]
+    );
+
+    res.json({
+      permissions: result.rows,
+      total: result.rows.length,
+    });
+  } catch (error) {
+    console.error('Profile permissions error:', error);
+    res.status(500).json({ error: 'Failed to get profile permissions' });
+  }
+});
+
+// GET /api/salesforce/org/:orgId/permsets/:permsetId/permissions - Get permission set permissions
+router.get('/org/:orgId/permsets/:permsetId/permissions', authenticate, async (req: AuthRequest, res: Response) => {
+  const { orgId, permsetId } = req.params;
+
+  try {
+    const result = await query(
+      `SELECT
+        salesforce_object_name as "objectName",
+        permissions_create as "create",
+        permissions_read as "read",
+        permissions_edit as "edit",
+        permissions_delete as "delete",
+        permissions_view_all as "viewAll",
+        permissions_modify_all as "modifyAll"
+       FROM object_permissions
+       WHERE organization_id = $1
+         AND parent_id = $2
+         AND parent_type = 'PermissionSet'
+       ORDER BY salesforce_object_name ASC`,
+      [orgId, permsetId]
+    );
+
+    res.json({
+      permissions: result.rows,
+      total: result.rows.length,
+    });
+  } catch (error) {
+    console.error('Permission set permissions error:', error);
+    res.status(500).json({ error: 'Failed to get permission set permissions' });
+  }
+});
+
 export default router;
