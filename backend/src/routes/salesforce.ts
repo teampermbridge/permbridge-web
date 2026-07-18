@@ -2,6 +2,7 @@ import { Router, Response } from 'express';
 import { query } from '../db.js';
 import { authenticate, AuthRequest } from '../middleware/auth.js';
 import { getAuthorizationUrl } from '../services/salesforceService.js';
+import { syncSalesforceOrg } from '../services/syncService.js';
 
 const router = Router();
 
@@ -250,6 +251,50 @@ router.get('/org/:orgId/permsets/:permsetId/permissions', authenticate, async (r
   } catch (error) {
     console.error('Permission set permissions error:', error);
     res.status(500).json({ error: 'Failed to get permission set permissions' });
+  }
+});
+
+// POST /api/salesforce/org/:orgId/sync - Manually trigger sync
+router.post('/:orgId/sync', authenticate, async (req: AuthRequest, res: Response) => {
+  const { orgId } = req.params;
+
+  try {
+    const accessCheck = await query(
+      `SELECT role FROM organization_members
+       WHERE organization_id = $1 AND user_id = $2`,
+      [orgId, req.userId]
+    );
+
+    if (accessCheck.rows.length === 0) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    const connResult = await query(
+      `SELECT id, access_token, salesforce_instance_url
+       FROM salesforce_connections
+       WHERE organization_id = $1 AND is_primary = true
+       LIMIT 1`,
+      [orgId]
+    );
+
+    if (connResult.rows.length === 0) {
+      return res.status(404).json({ error: 'No Salesforce connection found' });
+    }
+
+    const conn = connResult.rows[0];
+    syncSalesforceOrg(
+      conn.id,
+      conn.access_token,
+      conn.salesforce_instance_url,
+      orgId
+    ).catch((error) => {
+      console.error('Manual sync error:', error);
+    });
+
+    res.json({ message: 'Sync initiated' });
+  } catch (error) {
+    console.error('Manual sync error:', error);
+    res.status(500).json({ error: 'Failed to trigger sync' });
   }
 });
 

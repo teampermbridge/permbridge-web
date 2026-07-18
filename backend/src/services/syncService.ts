@@ -1,4 +1,5 @@
-import * as jsforce from 'jsforce';
+import jsforce from 'jsforce';
+import { randomUUID } from 'crypto';
 import { query } from '../db.js';
 import { createConnection, refreshAccessToken } from './salesforceService.js';
 
@@ -22,7 +23,7 @@ export async function syncSalesforceOrg(
   instanceUrl: string,
   organizationId: string
 ): Promise<SyncJob> {
-  const jobId = crypto.randomUUID();
+  const jobId = randomUUID();
 
   try {
     console.log(`[Sync ${jobId}] Starting sync for connection ${connectionId}`);
