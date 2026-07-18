@@ -41,7 +41,13 @@ export function UserDashboard() {
     checkConnections();
   }, [organization?.id]);
 
+  // Fetch actual organizations from database first
+  useEffect(() => {
+    fetchOrganizations();
+  }, []);
+
   // Handle org parameter from URL (e.g., after OAuth redirect)
+  // This runs AFTER organizations array is populated
   useEffect(() => {
     const orgIdFromUrl = searchParams.get('org');
     if (orgIdFromUrl && organizations.length > 0) {
@@ -53,11 +59,6 @@ export function UserDashboard() {
       }
     }
   }, [searchParams, organizations, setOrganization]);
-
-  // Fetch actual organizations from database
-  useEffect(() => {
-    fetchOrganizations();
-  }, []);
 
   const fetchOrganizations = async () => {
     try {
