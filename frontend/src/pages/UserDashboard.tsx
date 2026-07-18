@@ -107,6 +107,9 @@ export function UserDashboard() {
           parsed.state.organization = null;
           localStorage.setItem('auth-storage', JSON.stringify(parsed));
         }
+        // Force reload to clear all cached state
+        window.location.href = '/user-dashboard';
+        return;
       }
       // Refresh organizations list
       await fetchOrganizations();
