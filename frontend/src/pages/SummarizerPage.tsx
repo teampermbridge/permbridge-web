@@ -27,12 +27,20 @@ export function SummarizerPage() {
   const [detailsLoading, setDetailsLoading] = useState(false);
   const [permissions, setPermissions] = useState<PermissionDetail[]>([]);
   const [expandedObjects, setExpandedObjects] = useState<Set<string>>(new Set());
+  const [dropdownOpen, setDropdownOpen] = useState(false);
 
   useEffect(() => {
     if (organization?.id) {
       fetchData();
+      setDropdownOpen(false);
     }
   }, [organization?.id, type]);
+
+  useEffect(() => {
+    const handleClickOutside = () => setDropdownOpen(false);
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, []);
 
   const fetchData = async () => {
     try {
@@ -241,22 +249,25 @@ export function SummarizerPage() {
               Select
             </div>
             <button
-              disabled={loading}
+              onClick={(e) => {
+                e.stopPropagation();
+                setDropdownOpen(!dropdownOpen);
+              }}
               style={{
                 width: '100%',
                 padding: '11px 14px',
                 background: '#0e1426',
-                border: '1px solid #262f47',
+                border: dropdownOpen ? '1px solid #1B73E8' : '1px solid #262f47',
                 color: selectedTarget ? '#e2e8f0' : '#586178',
                 fontSize: '13.5px',
                 borderRadius: '9px',
-                cursor: loading ? 'not-allowed' : 'pointer',
-                opacity: loading ? 0.6 : 1,
+                cursor: 'pointer',
                 textAlign: 'left',
+                transition: 'border-color 0.2s',
               }}>
-              {loading ? 'Loading...' : (selectedTarget ? selectedTarget : `Select ${type} —`)}
+              {selectedTarget ? selectedTarget : `Select ${type} —`}
             </button>
-            {!loading && (type === 'profile' ? profiles : permsets).length > 0 && (
+            {dropdownOpen && (
               <div style={{
                 position: 'absolute',
                 top: '74px',
@@ -271,22 +282,44 @@ export function SummarizerPage() {
                 maxHeight: '240px',
                 overflowY: 'auto',
               }}>
-                {(type === 'profile' ? profiles : permsets).map((item, i) => (
-                  <button
-                    key={i}
-                    onClick={() => handleSelectTarget(item)}
-                    style={{
-                      width: '100%',
-                      padding: '9px 10px',
-                      borderRadius: '7px',
-                      color: '#d5dbe8',
-                      fontSize: '13px',
-                      cursor: 'pointer',
-                      border: 'none',
-                      background: selectedTarget === item.name ? 'rgba(27,115,232,0.12)' : 'transparent',
-                      textAlign: 'left',
-                      transition: 'background 0.12s',
-                    }}>
+                {loading ? (
+                  <div style={{ padding: '16px', textAlign: 'center', color: '#8891a6', fontSize: '13px' }}>
+                    Loading {type}s...
+                  </div>
+                ) : (type === 'profile' ? profiles : permsets).length === 0 ? (
+                  <div style={{ padding: '16px', color: '#8891a6', fontSize: '13px' }}>
+                    <div>No {type}s synced yet.</div>
+                    <div style={{ fontSize: '12px', marginTop: '8px', color: '#586178' }}>
+                      Go to Connect to sync your Salesforce org.
+                    </div>
+                  </div>
+                ) : (
+                  (type === 'profile' ? profiles : permsets).map((item, i) => (
+                    <button
+                      key={i}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleSelectTarget(item);
+                        setDropdownOpen(false);
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = 'rgba(27,115,232,0.08)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = selectedTarget === item.name ? 'rgba(27,115,232,0.12)' : 'transparent';
+                      }}
+                      style={{
+                        width: '100%',
+                        padding: '9px 10px',
+                        borderRadius: '7px',
+                        color: '#d5dbe8',
+                        fontSize: '13px',
+                        cursor: 'pointer',
+                        border: 'none',
+                        background: selectedTarget === item.name ? 'rgba(27,115,232,0.12)' : 'transparent',
+                        textAlign: 'left',
+                        transition: 'background 0.12s',
+                      }}>
                     {item.name}
                   </button>
                 ))}
