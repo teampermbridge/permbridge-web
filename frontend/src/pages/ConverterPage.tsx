@@ -121,7 +121,7 @@ export function ConverterPage() {
               Select a profile to convert
             </div>
             <div style={{ color: '#8891a6', fontSize: '13.5px', marginBottom: '24px' }}>
-              Claude will analyze every object and field permission and suggest logical groupings.
+              PermBridge will analyze every object and field permission and suggest logical groupings for your permission sets.
             </div>
             <div style={{ background: '#0e1426', border: '1px solid #1f2740', borderRadius: '14px', overflow: 'hidden' }}>
               {PROFILES.map((p, i) => (
@@ -174,7 +174,7 @@ export function ConverterPage() {
                 cursor: selectedProfile ? 'pointer' : 'not-allowed',
               }}
             >
-              Analyze with AI
+              Analyze Permissions
             </button>
           </div>
         )}

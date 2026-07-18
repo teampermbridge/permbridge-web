@@ -85,7 +85,7 @@ export function LandingPage() {
             maxWidth: '600px',
             margin: '0 auto 40px',
           }}>
-            Convert Profiles into Permission Sets with AI, get a 360° summary of any access grant, and cross-compare permissions across your whole org – in minutes, not sprints.
+            Convert Profiles into Permission Sets, get a comprehensive summary of any access grant, and cross-compare permissions across your whole org – in minutes, not sprints.
           </p>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '14px', marginBottom: '20px' }}>
             <Link to="/login" style={{
@@ -168,7 +168,7 @@ export function LandingPage() {
             {[
               { num: '79.5%', text: 'of orgs still haven\'t fully moved off Profile-based access' },
               { num: '312', text: 'average permissions bundled into a single Salesforce Profile' },
-              { num: '0', text: 'native Salesforce tools for AI-assisted permission conversion' },
+              { num: '0', text: 'native Salesforce tools for permission set conversion' },
             ].map((stat, i) => (
               <div key={i} style={{
                 background: '#0e1426',
@@ -207,7 +207,7 @@ export function LandingPage() {
               Profile → Permission Set Converter
             </h3>
             <p style={{ color: '#9aa3ba', fontSize: '15px', lineHeight: '1.65', margin: '0 0 22px' }}>
-              Claude reads every object and field permission on a Profile and proposes logical, reusable Permission Sets – "Sales Core," "Reporting Access," "Admin Utilities" – not a 1:1 dump. Drag permissions between groups, rename, and convert with one click.
+              PermBridge analyzes every object and field permission on a Profile and suggests logical, reusable Permission Sets – "Sales Core," "Reporting Access," "Admin Utilities" – not a 1:1 dump. Drag permissions between groups, rename, and convert with one click.
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               {[

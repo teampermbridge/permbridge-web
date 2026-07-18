@@ -125,12 +125,12 @@ export function RegisterPage() {
             fontSize: '16px',
             lineHeight: '1.6',
             margin: '0 0 40px 0',
-          }}>Whether you run on Profiles, Permission Sets, or both — Perm Bridge helps you convert, summarize and audit access with an AI copilot that explains every change.</p>
+          }}>Whether you run on Profiles, Permission Sets, or both — Perm Bridge helps you convert, summarize and audit access with precision and clarity.</p>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             {[
               'Works with Profile-based or Permission-Set-based orgs',
-              'AI-assisted conversion in under 5 minutes',
+              'Convert profiles to permission sets in minutes',
               'SOC 2 Type II certified, SSO / SAML ready',
             ].map((text, idx) => (
               <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '12px', color: '#c3cadb', fontSize: '14.5px' }}>

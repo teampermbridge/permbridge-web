@@ -209,7 +209,7 @@ export function HomePage() {
             {[
               {
                 title: 'Profile → Permission Set Converter',
-                desc: 'AI groups a profile\'s permissions into logical, reusable permission sets.',
+                desc: 'Convert a profile\'s permissions into logical, reusable permission sets.',
                 color: '#5b9cf0',
                 icon: Zap,
                 link: '/converter',
