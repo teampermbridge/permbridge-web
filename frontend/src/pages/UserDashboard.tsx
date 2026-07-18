@@ -97,6 +97,10 @@ export function UserDashboard() {
 
     try {
       await client.delete(`/api/auth/organizations/${orgId}`);
+      // Clear from auth store if it's the current org
+      if (organization?.id === orgId) {
+        setOrganization(null);
+      }
       // Refresh organizations list
       await fetchOrganizations();
     } catch (error) {
