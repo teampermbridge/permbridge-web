@@ -100,14 +100,9 @@ export function UserDashboard() {
       // Clear from auth store if it's the current org
       if (organization?.id === orgId) {
         setOrganization(null);
-        // Clear localStorage to ensure it's removed
-        const storage = localStorage.getItem('auth-storage');
-        if (storage) {
-          const parsed = JSON.parse(storage);
-          parsed.state.organization = null;
-          localStorage.setItem('auth-storage', JSON.stringify(parsed));
-        }
-        // Force reload to clear all cached state
+        // Completely wipe auth storage to force fresh load
+        localStorage.removeItem('auth-storage');
+        // Hard reload to clear all state
         window.location.href = '/user-dashboard';
         return;
       }
