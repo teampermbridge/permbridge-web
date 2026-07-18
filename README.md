@@ -1,21 +1,21 @@
 # PermBridge Web App
 
-Standalone web application for intelligently managing Salesforce permissions.
+Standalone web application for managing Salesforce permissions with precision and clarity.
 
-**Status:** Phase 1 - Foundation (in development)  
-**Stack:** React 18 + Node.js + PostgreSQL + Claude API
+**Status:** Phase 2 - Data Display & MFA Compliance (in development)  
+**Stack:** React 18 + Node.js + PostgreSQL
 
 ## Features
 
-### Phase 1 (Current)
-- ✅ Salesforce OAuth login flow
-- ✅ Profile caching from Salesforce
-- ✅ Permission Set caching from Salesforce
-- ✅ PostgreSQL database schema
-- ✅ Basic API endpoints for profiles and permission sets
-- 🔄 Profile 2 Permset Converter (Claude integration coming)
-- 🔄 Permission Set Summarizer (UI complete, details coming)
-- 🔄 Permission Matrix X-Ray (Phase 3)
+### Phase 2 (Current)
+- ✅ Salesforce OAuth 2.0 with PKCE
+- ✅ MFA compliance (July 20, 2026 enforcement ready)
+- ✅ Profile & Permission Set caching
+- ✅ Background sync from Salesforce
+- ✅ PostgreSQL with multi-tenant schema
+- 🔄 Profile 2 Permission Set Converter
+- 🔄 Permission Set Summarizer & Analysis
+- 🔄 Permission Matrix Comparison
 
 ## Getting Started
 
@@ -23,7 +23,6 @@ Standalone web application for intelligently managing Salesforce permissions.
 - Node.js 18+
 - Docker & Docker Compose
 - Salesforce org (sandbox or production)
-- Anthropic API key
 
 ### 1. Clone & Install
 
