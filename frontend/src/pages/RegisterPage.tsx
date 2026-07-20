@@ -91,8 +91,8 @@ export function RegisterPage() {
       setOrganization(organization);
       setOrganizations([organization]);
 
-      console.log('📝 REGISTER: About to navigate to /user-dashboard');
-      navigate('/user-dashboard');
+      console.log('📝 REGISTER: About to navigate to /dashboard with new org');
+      navigate(`/dashboard?org=${organization.id}`);
       console.log('📝 REGISTER: Navigation completed');
     } catch (error: any) {
       console.error('📝 REGISTER: ERROR', error);

@@ -140,6 +140,9 @@ async function syncProfiles(
     const profiles = result.records || [];
     console.log(`Found ${profiles.length} profiles`);
 
+    let insertCount = 0;
+    let updateCount = 0;
+
     for (const profile of profiles) {
       // Check if profile already exists
       const existing = await query(
@@ -150,24 +153,35 @@ async function syncProfiles(
 
       if (existing.rows.length === 0) {
         // Insert new profile
-        await query(
+        console.log(`  Inserting profile: ${profile.Name} (${profile.Id}) for org ${organizationId}`);
+        const insertResult = await query(
           `INSERT INTO profiles (
             organization_id, salesforce_connection_id, salesforce_profile_id, name, description, last_synced_at
-          ) VALUES ($1, $2, $3, $4, $5, NOW())`,
+          ) VALUES ($1, $2, $3, $4, $5, NOW())
+          RETURNING id`,
           [organizationId, connectionId, profile.Id, profile.Name, profile.Description || null]
         );
+        console.log(`  ✓ Inserted profile with id: ${insertResult.rows[0]?.id}`);
+        insertCount++;
       } else {
         // Update existing profile
+        console.log(`  Updating profile: ${profile.Name} (${profile.Id})`);
         await query(
           `UPDATE profiles
            SET name = $1, description = $2, last_synced_at = NOW()
            WHERE salesforce_connection_id = $3 AND salesforce_profile_id = $4`,
           [profile.Name, profile.Description || null, connectionId, profile.Id]
         );
+        updateCount++;
       }
     }
 
-    console.log(`✓ Synced ${profiles.length} profiles`);
+    // Verify data was actually inserted
+    const verification = await query(
+      `SELECT COUNT(*) as count FROM profiles WHERE organization_id = $1`,
+      [organizationId]
+    );
+    console.log(`✓ Synced ${profiles.length} profiles (${insertCount} new, ${updateCount} updated). Database verification: ${verification.rows[0].count} profiles for org ${organizationId}`);
   } catch (error) {
     console.error('Profile sync error:', error);
     throw error;

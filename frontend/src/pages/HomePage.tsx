@@ -1,33 +1,70 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { useAuthStore } from '../store/authStore';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { LogOut, Bell, ChevronDown, Settings, Zap, BarChart3, Grid3x3, ArrowRight, TrendingUp } from 'lucide-react';
 import client from '../api/client';
 
 export function HomePage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { user, logout } = useAuth();
   const organization = useAuthStore((state) => state.organization);
+  const setOrganization = useAuthStore((state) => state.setOrganization);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [orgMenuOpen, setOrgMenuOpen] = useState(false);
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [hasConnection, setHasConnection] = useState(false);
+  const [organizations, setOrganizations] = useState<any[]>([]);
 
+  // Fetch organizations first
+  useEffect(() => {
+    const fetchOrganizations = async () => {
+      try {
+        const res = await client.get('/api/auth/me');
+        if (res.data.organizations) {
+          setOrganizations(res.data.organizations);
+        }
+      } catch (error) {
+        console.error('Failed to fetch organizations:', error);
+      }
+    };
+    fetchOrganizations();
+  }, []);
+
+  // Handle org parameter from URL (e.g., after OAuth redirect)
+  useEffect(() => {
+    const orgIdFromUrl = searchParams.get('org');
+    if (orgIdFromUrl && organizations.length > 0) {
+      const foundOrg = organizations.find(org => org.id === orgIdFromUrl);
+      if (foundOrg && foundOrg.id !== organization?.id) {
+        setOrganization(foundOrg);
+      }
+    }
+  }, [searchParams, organizations, setOrganization, organization?.id]);
+
+  // Fetch data when organization changes
   useEffect(() => {
     if (organization?.id) {
-      fetchStats();
+      fetchData();
     }
   }, [organization?.id]);
 
-  const fetchStats = async () => {
+  const fetchData = async () => {
     try {
       setLoading(true);
-      const response = await client.get(`/api/dashboard/org/${organization?.id}`);
-      setStats(response.data);
+      // Check for Salesforce connection
+      const connResponse = await client.get(`/api/salesforce/${organization?.id}/connections`);
+      setHasConnection(connResponse.data && connResponse.data.length > 0);
+
+      // Fetch stats
+      const statsResponse = await client.get(`/api/dashboard/org/${organization?.id}`);
+      setStats(statsResponse.data);
     } catch (error) {
-      console.error('Failed to fetch dashboard stats:', error);
+      console.error('Failed to fetch dashboard data:', error);
       setStats(null);
+      setHasConnection(false);
     } finally {
       setLoading(false);
     }
@@ -251,7 +288,48 @@ export function HomePage() {
             margin: '0 0 32px 0',
           }}>Here's what's happening in {organization?.name || 'your org'}.</p>
 
-          {/* Stats */}
+          {/* Connect Salesforce CTA - Show if no connection */}
+          {!loading && !hasConnection && (
+            <div style={{
+              background: 'linear-gradient(135deg, rgba(27,115,232,0.15) 0%, rgba(139,92,246,0.08) 100%)',
+              border: '1px solid rgba(27,115,232,0.3)',
+              borderRadius: '16px',
+              padding: '40px',
+              textAlign: 'center',
+              marginBottom: '40px',
+            }}>
+              <div style={{ color: '#f1f5f9', fontSize: '22px', fontWeight: '700', marginBottom: '12px' }}>
+                Connect Your Salesforce Organization
+              </div>
+              <p style={{ color: '#8891a6', fontSize: '15px', margin: '0 0 24px 0', maxWidth: '500px', margin: '0 auto 24px' }}>
+                Sync your profiles and permission sets to start using the permission management tools.
+              </p>
+              <button
+                onClick={() => navigate('/connect')}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  padding: '14px 28px',
+                  background: '#1B73E8',
+                  border: 'none',
+                  color: '#fff',
+                  fontSize: '15px',
+                  fontWeight: '600',
+                  borderRadius: '10px',
+                  cursor: 'pointer',
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.background = '#1863c9'}
+                onMouseLeave={(e) => e.currentTarget.style.background = '#1B73E8'}
+              >
+                <Zap size={18} />
+                Connect Salesforce
+              </button>
+            </div>
+          )}
+
+          {/* Stats - Only show if connected */}
+          {!loading && hasConnection && (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '18px', marginBottom: '40px' }}>
             {[
               { label: 'Permission sets managed', value: stats?.permissionSets || '0', subtitle: 'synced from Salesforce', color: '#5b9cf0' },
@@ -294,8 +372,11 @@ export function HomePage() {
               </div>
             ))}
           </div>
+          )}
 
-          {/* Tools */}
+          {/* Tools - Only show if connected */}
+          {!loading && hasConnection && (
+          <>
           <div style={{ color: '#c3cadb', fontSize: '13px', fontWeight: '700', letterSpacing: '0.6px', textTransform: 'uppercase', marginBottom: '16px' }}>
             Tools
           </div>
@@ -374,6 +455,8 @@ export function HomePage() {
               </Link>
             ))}
           </div>
+          </>
+          )}
         </div>
       </main>
 

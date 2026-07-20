@@ -423,6 +423,8 @@ router.post('/organizations', authenticate, async (req: AuthRequest, res: Respon
 router.delete('/organizations/:orgId', authenticate, async (req: AuthRequest, res: Response) => {
   const { orgId } = req.params;
 
+  console.log(`🗑️ DELETE ORG: User ${req.userId} attempting to delete org ${orgId}`);
+
   try {
     // Verify user is owner
     const ownerCheck = await query(
@@ -431,16 +433,27 @@ router.delete('/organizations/:orgId', authenticate, async (req: AuthRequest, re
       [orgId, req.userId]
     );
 
+    console.log(`🗑️ DELETE ORG: Owner check result:`, ownerCheck.rows);
+
     if (ownerCheck.rows.length === 0 || ownerCheck.rows[0].role !== 'owner') {
+      console.log(`🗑️ DELETE ORG: Not owner - denying delete`);
       return res.status(403).json({ error: 'Only organization owner can delete it' });
     }
 
+    console.log(`🗑️ DELETE ORG: User is owner, deleting org ${orgId}...`);
+
     // Delete organization (cascades to all related data)
-    await query('DELETE FROM organizations WHERE id = $1', [orgId]);
+    const deleteResult = await query('DELETE FROM organizations WHERE id = $1', [orgId]);
+
+    console.log(`🗑️ DELETE ORG: Delete returned`, deleteResult);
+
+    // Verify it's gone
+    const verifyDelete = await query('SELECT id FROM organizations WHERE id = $1', [orgId]);
+    console.log(`🗑️ DELETE ORG: Verification - org still exists?`, verifyDelete.rows.length > 0);
 
     res.json({ success: true });
   } catch (error) {
-    console.error('Delete organization error:', error);
+    console.error('🗑️ DELETE ORG: Error:', error);
     res.status(500).json({ error: 'Failed to delete organization' });
   }
 });
